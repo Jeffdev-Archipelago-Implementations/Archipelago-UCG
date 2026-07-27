@@ -2,135 +2,342 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from BaseClasses import ItemClassification, Location
+from BaseClasses import Location
 
 from . import items
 
 if TYPE_CHECKING:
-    from .world import APQuestWorld
+    from .world import UncannyCatWorld
 
-# Every location must have a unique integer ID associated with it.
-# We will have a lookup from location name to ID here that, in world.py, we will import and bind to the world class.
-# Even if a location doesn't exist on specific options, it must be present in this lookup.
-LOCATION_NAME_TO_ID = {
-    "Top Left Room Chest": 1,
-    "Top Middle Chest": 2,
-    "Bottom Left Chest": 3,
-    "Bottom Left Extra Chest": 4,
-    "Bottom Right Room Left Chest": 5,
-    "Bottom Right Room Right Chest": 6,
-    # Location IDs don't need to be sequential, as long as they're unique and greater than 0.
-    "Right Room Enemy Drop": 10,
+BASE_ID = 100
+
+# name -> (id, list of gimmick items logically required to reach the check)
+LOCATION_NAME_TO_ID: dict[str, tuple[int, list[str]]] = {
+    "0-1: Welcome to UNCANNY CAT GOLF! Complete": (BASE_ID + 0, []),
+    "0-1: Welcome to UNCANNY CAT GOLF! Peak": (BASE_ID + 1000, []),
+    "0-2: Hello Walls Complete": (BASE_ID + 1, []),
+    "0-2: Hello Walls Peak": (BASE_ID + 1001, []),
+    "0-3: Meet the Slopes Complete": (BASE_ID + 2, []),
+    "0-3: Meet the Slopes Peak": (BASE_ID + 1002, []),
+    "0-4: Pretty Pennies Complete": (BASE_ID + 3, []),
+    "0-4: Pretty Pennies Peak": (BASE_ID + 1003, []),
+    "0-5: Onward and Golfward! Complete": (BASE_ID + 4, []),
+    "0-5: Onward and Golfward! Peak": (BASE_ID + 1004, []),
+
+    "1-1: Welcome to GOLF CENTRAL! Complete": (BASE_ID + 100, []),
+    "1-1: Welcome to GOLF CENTRAL! Peak": (BASE_ID + 1100, []),
+    "1-2: Getting Around Complete": (BASE_ID + 101, []),
+    "1-2: Getting Around Peak": (BASE_ID + 1101, []),
+    "1-3: A New Angle Complete": (BASE_ID + 102, []),
+    "1-3: A New Angle Peak": (BASE_ID + 1102, []),
+    "1-4: Breakthrough! Complete": (BASE_ID + 103, ["Breakable Tiles"]),
+    "1-4: Breakthrough! Peak": (BASE_ID + 1103, ["Breakable Tiles"]),
+    "1-5: Right up my Alley Complete": (BASE_ID + 104, ["Breakable Tiles"]),
+    "1-5: Right up my Alley Peak": (BASE_ID + 1104, ["Breakable Tiles"]),
+    "1-6: Roundabout Complete": (BASE_ID + 105, ["Breakable Tiles"]),
+    "1-6: Roundabout Peak": (BASE_ID + 1105, ["Breakable Tiles"]),
+    "1-7: Bunker Funk Complete": (BASE_ID + 106, ["Breakable Tiles"]),
+    "1-7: Bunker Funk Peak": (BASE_ID + 1106, ["Breakable Tiles"]),
+    "1-8: Bony Cronies Complete": (BASE_ID + 107, []),
+    "1-8: Bony Cronies Peak": (BASE_ID + 1107, []),
+    "1-9: Kitty Litter Complete": (BASE_ID + 108, []),
+    "1-9: Kitty Litter Peak": (BASE_ID + 1108, []),
+    "1-10: Double Trouble Complete": (BASE_ID + 109, []),
+    "1-10: Double Trouble Peak": (BASE_ID + 1109, []),
+    "1-11: Triple Trouble Complete": (BASE_ID + 110, []),
+    "1-11: Triple Trouble Peak": (BASE_ID + 1110, []),
+    "1-12: An Absurd Amount of Trouble Complete": (BASE_ID + 111, []),
+    "1-12: An Absurd Amount of Trouble Peak": (BASE_ID + 1111, []),
+    "1-13: The Key to Success Complete": (BASE_ID + 112, ["Keys"]),
+    "1-13: The Key to Success Peak": (BASE_ID + 1112, ["Keys"]),
+    "1-14: Ooooh, Pretty Colors Complete": (BASE_ID + 113, ["Keys"]),
+    "1-14: Ooooh, Pretty Colors Peak": (BASE_ID + 1113, ["Keys"]),
+    "1-15: Almost a Cakewalk Complete": (BASE_ID + 114, ["Keys"]),
+    "1-15: Almost a Cakewalk Peak": (BASE_ID + 1114, ["Keys"]),
+    "1-16: Silly Yard Complete": (BASE_ID + 115, ["Keys"]),
+    "1-16: Silly Yard Peak": (BASE_ID + 1115, ["Keys"]),
+    "1-17: Scattered Around Complete": (BASE_ID + 116, ["Keys"]),
+    "1-17: Scattered Around Peak": (BASE_ID + 1116, ["Keys"]),
+    "1-18: Rest Stop Complete": (BASE_ID + 117, []),
+    "1-18: Rest Stop Peak": (BASE_ID + 1117, []),
+
+    "2-1: Welcome to GLOWSTICK CITY! Complete": (BASE_ID + 200, []),
+    "2-1: Welcome to GLOWSTICK CITY! Peak": (BASE_ID + 1200, []),
+    "2-2: Stop Right There! Complete": (BASE_ID + 201, []),
+    "2-2: Stop Right There! Peak": (BASE_ID + 1201, []),
+    "2-3: Parking Lot Complete": (BASE_ID + 202, []),
+    "2-3: Parking Lot Peak": (BASE_ID + 1202, []),
+    "2-4: Just Zoomin' By Complete": (BASE_ID + 203, []),
+    "2-4: Just Zoomin' By Peak": (BASE_ID + 1203, ["Go Markers"]),
+    "2-5: Stop 'n' Start Complete": (BASE_ID + 204, ["Keys"]),
+    "2-5: Stop 'n' Start Peak": (BASE_ID + 1204, ["Keys", "Go Markers", "Stop Markers"]),
+    "2-6: Backstreet Skullz Complete": (BASE_ID + 205, ["Breakable Tiles"]),
+    "2-6: Backstreet Skullz Peak": (BASE_ID + 1205, ["Breakable Tiles", "Go Markers", "Stop Markers"]),
+    "2-7: Look Both Ways Complete": (BASE_ID + 206, []),
+    "2-7: Look Both Ways Peak": (BASE_ID + 1206, []),
+    "2-8: Dimlit District Complete": (BASE_ID + 207, []),
+    "2-8: Dimlit District Peak": (BASE_ID + 1207, ["Stop Markers", "Go Markers"]),
+    "2-9: This is A Mugging Complete": (BASE_ID + 208, []),
+    "2-9: This is A Mugging Peak": (BASE_ID + 1208, ["Stop Markers", "Go Markers"]),
+    "2-10: jump pad introductary level Complete": (BASE_ID + 209, ["Jump Pads"]),
+    "2-10: jump pad introductary level Peak": (BASE_ID + 1209, ["Jump Pads"]),
+    "2-11: Heist To Meet You Complete": (BASE_ID + 210, ["Keys", "Breakable Tiles", "Jump Pads", "Go Markers"]),
+    "2-11: Heist To Meet You Peak": (BASE_ID + 1210, ["Keys", "Breakable Tiles", "Jump Pads", "Go Markers"]),
+    "2-12: Highway Getaway! Complete": (BASE_ID + 211, []),
+    "2-12: Highway Getaway! Peak": (BASE_ID + 1211, []),
+    "2-13: Brawl In The Big City Complete": (BASE_ID + 212, ["Keys", "Jump Pads"]),
+    "2-13: Brawl In The Big City Peak": (BASE_ID + 1212, ["Keys", "Jump Pads", "Go Markers", "Stop Markers"]),
+    "2-14: Waiter! There's Slop In My Soup! Complete": (BASE_ID + 213, ["Keys"]),
+    "2-14: Waiter! There's Slop In My Soup! Peak": (
+        BASE_ID + 1213,
+        ["Keys", "Breakable Tiles", "Jump Pads", "Go Markers", "Stop Markers"],
+    ),
+    "2-15: Back In The Back Alley Complete": (BASE_ID + 214, ["Keys", "Jump Pads"]),
+    "2-15: Back In The Back Alley Peak": (BASE_ID + 1214, ["Keys", "Jump Pads", "Stop Markers", "Go Markers"]),
+    "2-16: Trickshot! Complete": (BASE_ID + 215, ["Jump Pads"]),
+    "2-16: Trickshot! Peak": (BASE_ID + 1215, ["Jump Pads", "Stop Markers", "Go Markers"]),
+    "2-17: Baby Vegas Complete": (BASE_ID + 216, ["Keys", "Jump Pads"]),
+    "2-17: Baby Vegas Peak": (BASE_ID + 1216, ["Keys", "Jump Pads", "Stop Markers"]),
+    "2-18: Good Night, Glowstick City Complete": (BASE_ID + 217, ["Jump Pads"]),
+    "2-18: Good Night, Glowstick City Peak": (BASE_ID + 1217, ["Jump Pads"]),
+
+    "3-1: Welcome to CHUCKLE PARK! Complete": (BASE_ID + 300, []),
+    "3-1: Welcome to CHUCKLE PARK! Peak": (BASE_ID + 1300, []),
+    "3-1: Welcome to CHUCKLE PARK! Yellow Smiley": (BASE_ID + 2303, []),
+    "3-2: Chuckle-Go-Round Complete": (BASE_ID + 301, ["Breakable Tiles"]),
+    "3-2: Chuckle-Go-Round Peak": (BASE_ID + 1301, ["Breakable Tiles", "Stop Markers"]),
+    "3-2: Chuckle-Go-Round Yellow Smiley": (BASE_ID + 2308, []),
+    "3-3: Switch It Up! Complete": (BASE_ID + 302, ["Switch Tiles"]),
+    "3-3: Switch It Up! Peak": (BASE_ID + 1302, ["Switch Tiles"]),
+    "3-4: JumbleHouse Complete": (BASE_ID + 303, ["Switch Tiles"]),
+    "3-4: JumbleHouse Peak": (BASE_ID + 1303, ["Switch Tiles"]),
+    "3-5: Titular Chuckles Complete": (BASE_ID + 304, ["Keys"]),
+    "3-5: Titular Chuckles Peak": (BASE_ID + 1304, ["Keys", "Breakable Tiles"]),
+    "3-5: Titular Chuckles Yellow Smiley": (BASE_ID + 2323, []),
+    "3-6: Cleanup On Aisle 2! Complete": (BASE_ID + 305, ["Breakable Tiles"]),
+    "3-6: Cleanup On Aisle 2! Peak": (BASE_ID + 1305, ["Breakable Tiles"]),
+    "3-7: Chuckles Inc. Complete": (BASE_ID + 306, ["Keys"]),
+    "3-7: Chuckles Inc. Peak": (BASE_ID + 1306, ["Keys", "Jump Pads", "Stop Markers", "Go Markers"]),
+    "3-7: Chuckles Inc. Yellow Smiley": (BASE_ID + 2333, ["Keys", "Stop Markers"]),
+    "3-8: How Many Licks... Complete": (BASE_ID + 307, ["Breakable Tiles"]),
+    "3-8: How Many Licks... Peak": (BASE_ID + 1307, ["Breakable Tiles"]),
+    "3-9: House of Mirrors Complete": (BASE_ID + 308, ["Breakable Tiles"]),
+    "3-9: House of Mirrors Peak": (BASE_ID + 1308, ["Breakable Tiles"]),
+    "3-10: You Bring a Light? Complete": (BASE_ID + 309, []),
+    "3-10: You Bring a Light? Peak": (BASE_ID + 1309, []),
+    "3-11: Four Leaf Marathon Complete": (BASE_ID + 310, ["Keys", "Jump Pads"]),
+    "3-11: Four Leaf Marathon Peak": (BASE_ID + 1310, ["Keys", "Jump Pads"]),
+    "3-11: Four Leaf Marathon Red Smiley": (BASE_ID + 2350, []),
+    "3-11: Four Leaf Marathon Green Smiley": (BASE_ID + 2351, []),
+    "3-11: Four Leaf Marathon Blue Smiley": (BASE_ID + 2352, []),
+    "3-11: Four Leaf Marathon Yellow Smiley": (BASE_ID + 2353, ["Keys", "Jump Pads"]),
+    "3-12: Pursuit of Happiness Complete": (BASE_ID + 311, ["Switch Tiles"]),
+    "3-12: Pursuit of Happiness Peak": (BASE_ID + 1311, ["Switch Tiles", "Stop Markers", "Go Markers"]),
+    "3-12: Pursuit of Happiness Red Smiley": (BASE_ID + 2355, []),
+    "3-12: Pursuit of Happiness Green Smiley": (BASE_ID + 2356, ["Switch Tiles"]),
+    "3-12: Pursuit of Happiness Blue Smiley": (BASE_ID + 2357, ["Switch Tiles"]),
+    "3-12: Pursuit of Happiness Yellow Smiley": (BASE_ID + 2358, ["Switch Tiles"]),
+    "3-12: Pursuit of Happiness Orange Smiley": (BASE_ID + 2359, ["Switch Tiles", "Go Markers", "Stop Markers"]),
+    "3-13: UNCANNY DOG GOLF Complete": (BASE_ID + 312, ["Dog", "Switch Tiles"]),
+    "3-13: UNCANNY DOG GOLF Peak": (BASE_ID + 1312, ["Dog", "Switch Tiles"]),
+    "3-14: Canny's Best Friend Complete": (BASE_ID + 313, ["Dog"]),
+    "3-14: Canny's Best Friend Peak": (BASE_ID + 1313, ["Dog", "Switch Tiles"]),
+    "3-15: UNCANNY DOG GOLF but with a cat instead of a dog Complete": (BASE_ID + 314, ["Dog", "Switch Tiles"]),
+    "3-15: UNCANNY DOG GOLF but with a cat instead of a dog Peak": (BASE_ID + 1314, ["Dog", "Switch Tiles"]),
+    "3-16: He Shoots! He scores! Complete": (BASE_ID + 315, ["Dog"]),
+    "3-16: He Shoots! He scores! Peak": (BASE_ID + 1315, ["Dog"]),
+    "3-16: He Shoots! He scores! Red Smiley": (BASE_ID + 2375, ["Dog"]),
+    "3-17: Racetrack Chasetrack Complete": (BASE_ID + 316, ["Keys", "Dog", "Jump Pads"]),
+    "3-17: Racetrack Chasetrack Peak": (
+        BASE_ID + 1316,
+        ["Keys", "Dog", "Jump Pads", "Go Markers", "Stop Markers"],
+    ),
+    "3-17: Racetrack Chasetrack Blue Smiley": (BASE_ID + 2382, ["Dog", "Jump Pads"]),
+    "3-17: Racetrack Chasetrack Yellow Smiley": (BASE_ID + 2383, ["Dog", "Jump Pads"]),
+    "3-18: The Chuckle Coaster Complete": (BASE_ID + 317, ["Jump Pads"]),
+    "3-18: The Chuckle Coaster Peak": (BASE_ID + 1317, ["Jump Pads"]),
+
+    "4-1: Welcome to THE FINAL FRONTIER. Complete": (BASE_ID + 400, []),
+    "4-1: Welcome to THE FINAL FRONTIER. Peak": (BASE_ID + 1400, []),
+    "4-2: No Time 4 Messing Around Complete": (BASE_ID + 401, ["Switch Tiles"]),
+    "4-2: No Time 4 Messing Around Peak": (BASE_ID + 1401, ["Switch Tiles"]),
+    "4-3: Now You're Thinking With Portal Complete": (BASE_ID + 402, ["Portals"]),
+    "4-3: Now You're Thinking With Portal Peak": (BASE_ID + 1402, ["Portals"]),
+    "4-4: Wholesome DIY Complete": (BASE_ID + 403, ["Portals"]),
+    "4-4: Wholesome DIY Peak": (BASE_ID + 1403, ["Portals"]),
+    "4-5: Cube Town Complete": (BASE_ID + 404, ["Switch Tiles"]),
+    "4-5: Cube Town Peak": (BASE_ID + 1404, ["Switch Tiles"]),
+    "4-6: Jumbling Labrynth Complete": (BASE_ID + 405, ["Portals", "Jump Pads"]),
+    "4-6: Jumbling Labrynth Peak": (BASE_ID + 1405, ["Portals", "Jump Pads"]),
+    "4-7: Production Room Complete": (BASE_ID + 406, ["Dog"]),
+    "4-7: Production Room Peak": (BASE_ID + 1406, ["Dog", "Jump Pads", "Go Markers"]),
+    "4-8: On Heavens No The Chuckles Are Plentiful Complete": (
+        BASE_ID + 407,
+        ["Nuke", "Stop Markers", "Switch Tiles"],
+    ),
+    "4-8: On Heavens No The Chuckles Are Plentiful Peak": (
+        BASE_ID + 1407,
+        ["Nuke", "Stop Markers", "Switch Tiles"],
+    ),
+    "4-9: Uncanny Valley Complete": (BASE_ID + 408, ["Jump Pads", "Stop Markers", "Keys", "Nuke"]),
+    "4-9: Uncanny Valley Peak": (BASE_ID + 1408, ["Jump Pads", "Stop Markers"]),
+    "4-10: Dog Patrol Complete": (BASE_ID + 409, ["Dog"]),
+    "4-10: Dog Patrol Peak": (BASE_ID + 1409, ["Dog"]),
+    "4-11: The Really Cool Mining Level Complete": (BASE_ID + 410, ["Dog", "Breakable Tiles"]),
+    "4-11: The Really Cool Mining Level Peak": (BASE_ID + 1410, ["Dog", "Breakable Tiles"]),
+    "4-12: Weather Alert Complete": (BASE_ID + 411, ["Keys", "Jump Pads"]),
+    "4-12: Weather Alert Peak": (BASE_ID + 1411, ["Keys", "Jump Pads"]),
+    "4-13: The Downfall Complete": (BASE_ID + 412, ["Breakable Tiles"]),
+    "4-13: The Downfall Peak": (BASE_ID + 1412, ["Breakable Tiles"]),
+    "4-14: I Saw This In A Movie Once Complete": (BASE_ID + 413, ["Keys"]),
+    "4-14: I Saw This In A Movie Once Peak": (BASE_ID + 1413, ["Keys"]),
+    "4-15: Abandoned Workspace Complete": (BASE_ID + 414, ["Keys"]),
+    "4-15: Abandoned Workspace Peak": (BASE_ID + 1414, ["Keys"]),
+    "4-16: Crimson Outpost Complete": (BASE_ID + 415, ["Breakable Tiles", "Nuke"]),
+    "4-16: Crimson Outpost Peak": (BASE_ID + 1415, ["Breakable Tiles", "Nuke"]),
+    "4-17: CATaclysmic CATastrophe Complete": (BASE_ID + 416, ["Switch Tiles", "Portals"]),
+    "4-17: CATaclysmic CATastrophe Peak": (BASE_ID + 1416, ["Switch Tiles", "Portals", "Stop Markers"]),
+    "4-18: The Wall Complete": (BASE_ID + 417, []),
+    "4-18: The Wall Peak": (BASE_ID + 1417, []),
+
+    "5-1: Elysian Fields. Complete": (BASE_ID + 500, []),
+    "5-1: Elysian Fields. Peak": (BASE_ID + 1500, []),
+    "5-2: ... Complete": (BASE_ID + 501, []),
+    "5-2: ... Peak": (BASE_ID + 1501, []),
+    "5-3: ..? Complete": (BASE_ID + 502, []),
+    "5-3: ..? Peak": (BASE_ID + 1502, []),
+    "5-4: The Horse Is Here. Complete": (BASE_ID + 503, ["Golf Balls"]),
+    "5-4: The Horse Is Here. Peak": (BASE_ID + 1503, ["Golf Balls"]),
+    "5-5: Unstable Complete": (BASE_ID + 504, ["Golf Balls"]),
+    "5-5: Unstable Peak": (BASE_ID + 1504, ["Golf Balls"]),
+    "5-6: Close Encounters Of The Equine Kind Complete": (BASE_ID + 505, ["Breakable Tiles", "Golf Balls"]),
+    "5-6: Close Encounters Of The Equine Kind Peak": (BASE_ID + 1505, ["Breakable Tiles", "Golf Balls"]),
+    "5-7: Late to the Party Complete": (BASE_ID + 506, ["Golf Balls"]),
+    "5-7: Late to the Party Peak": (BASE_ID + 1506, ["Golf Balls"]),
+    "5-8: Megaton Of Skeleton Complete": (BASE_ID + 507, ["Golf Balls"]),
+    "5-8: Megaton Of Skeleton Peak": (BASE_ID + 1507, ["Golf Balls"]),
+    "5-9: Neigh Impossible Complete": (BASE_ID + 508, ["Breakable Tiles", "Golf Balls"]),
+    "5-9: Neigh Impossible Peak": (BASE_ID + 1508, ["Breakable Tiles", "Golf Balls"]),
+    "5-10: Move It Or Lose It Complete": (BASE_ID + 509, ["Breakable Tiles", "Golf Balls"]),
+    "5-10: Move It Or Lose It Peak": (
+        BASE_ID + 1509,
+        ["Breakable Tiles", "Golf Balls", "Go Markers", "Stop Markers"],
+    ),
+    "5-11: Why Is There A Highway Here?!?! Complete": (BASE_ID + 510, ["Golf Balls", "Jump Pads"]),
+    "5-11: Why Is There A Highway Here?!?! Peak": (BASE_ID + 1510, ["Golf Balls", "Jump Pads"]),
+    "5-12: Two Face Temple Complete": (BASE_ID + 511, ["Golf Balls", "Switch Tiles"]),
+    "5-12: Two Face Temple Peak": (BASE_ID + 1511, ["Golf Balls", "Switch Tiles"]),
+    "5-12: Two Face Temple Blue Smiley": (BASE_ID + 2557, []),
+    "5-13: What Is This, A Crossover Episode? Complete": (BASE_ID + 512, ["Golf Balls"]),
+    "5-13: What Is This, A Crossover Episode? Peak": (BASE_ID + 1512, ["Golf Balls"]),
+    "5-14: Containment Breach Complete": (BASE_ID + 513, ["Golf Balls", "Switch Tiles", "Nuke"]),
+    "5-14: Containment Breach Peak": (BASE_ID + 1513, ["Golf Balls", "Switch Tiles", "Nuke"]),
+    "5-15: Hoppin' Mad Complete": (BASE_ID + 514, ["Golf Balls", "Portals|Jump Pads"]),
+    "5-15: Hoppin' Mad Peak": (BASE_ID + 1514, ["Golf Balls", "Portals", "Jump Pads"]),
+    "5-16: The Wizard of Gimmica Strikes!! Complete": (BASE_ID + 515, ["Golf Balls"]),
+    "5-16: The Wizard of Gimmica Strikes!! Peak": (BASE_ID + 1515, ["Golf Balls"]),
+    "5-17: Perilous Plinko Complete": (BASE_ID + 516, ["Golf Balls"]),
+    "5-17: Perilous Plinko Peak": (BASE_ID + 1516, ["Golf Balls"]),
+    "5-18: The End Is Neigh. Complete": (BASE_ID + 517, ["Landmines"]),
+    "5-18: The End Is Neigh. Peak": (BASE_ID + 1517, ["Landmines"]),
+
+    "P-1: Welcome to...? Complete": (BASE_ID + 600, []),
+    "P-1: Welcome to...? Peak": (BASE_ID + 1600, []),
+    "P-2: Welcome to COSMIC CHAMPIONSHIP!! Complete": (BASE_ID + 601, ["Keys", "Jump Pads"]),
+    "P-2: Welcome to COSMIC CHAMPIONSHIP!! Peak": (BASE_ID + 1601, ["Keys", "Jump Pads"]),
+    "P-3: Avoid the Void Complete": (BASE_ID + 602, ["Switch Tiles"]),
+    "P-3: Avoid the Void Peak": (BASE_ID + 1602, ["Switch Tiles", "Stop Markers"]),
+    "P-4: I Couldn't Beat This One :( Complete": (BASE_ID + 603, ["Switch Tiles"]),
+    "P-4: I Couldn't Beat This One :( Peak": (BASE_ID + 1603, ["Switch Tiles"]),
+    "P-5: Starstorm! Complete": (BASE_ID + 604, ["Breakable Tiles"]),
+    "P-5: Starstorm! Peak": (BASE_ID + 1604, ["Breakable Tiles", "Stop Markers"]),
+    "P-6: Oh My Goodness, This Beat Is So Hard Complete": (BASE_ID + 605, ["Metronome"]),
+    "P-6: Oh My Goodness, This Beat Is So Hard Peak": (BASE_ID + 1605, ["Metronome"]),
+    "P-7: Ourple Complete": (BASE_ID + 606, ["Metronome", "Switch Tiles"]),
+    "P-7: Ourple Peak": (BASE_ID + 1606, ["Metronome", "Switch Tiles"]),
+    "P-8: Get In The Groove! Complete": (BASE_ID + 607, ["Metronome", "Portals"]),
+    "P-8: Get In The Groove! Peak": (BASE_ID + 1607, ["Metronome", "Portals"]),
+    "P-9: Neon Hopscotch Complete": (BASE_ID + 608, ["Metronome"]),
+    "P-9: Neon Hopscotch Peak": (BASE_ID + 1608, ["Metronome"]),
+    "P-10: Claustrophobia Complete": (BASE_ID + 609, ["Metronome", "Keys"]),
+    "P-10: Claustrophobia Peak": (BASE_ID + 1609, ["Metronome", "Keys"]),
+    "P-11: Beat The Beat The Beat The Beat The Beat Complete": (BASE_ID + 610, ["Metronome", "Portals"]),
+    "P-11: Beat The Beat The Beat The Beat The Beat Peak": (BASE_ID + 1610, ["Metronome", "Portals"]),
+    "P-11: Beat The Beat The Beat The Beat The Beat Yellow Smiley": (BASE_ID + 2653, ["Metronome", "Portals"]),
+    "P-12: JumbleRAVE!! Complete": (BASE_ID + 611, ["Switch Tiles", "Jump Pads"]),
+    "P-12: JumbleRAVE!! Peak": (BASE_ID + 1611, ["Switch Tiles", "Jump Pads"]),
+    "P-13: where are you going come back Complete": (BASE_ID + 612, []),
+    "P-13: where are you going come back Peak": (BASE_ID + 1612, []),
+    "P-14: Sea of Lies Complete": (BASE_ID + 613, []),
+    "P-14: Sea of Lies Peak": (BASE_ID + 1613, []),
+    "P-15: Santa's Revenge (What!!!) Complete": (BASE_ID + 614, ["Portals", "Breakable Tiles", "Keys"]),
+    "P-15: Santa's Revenge (What!!!) Peak": (BASE_ID + 1614, ["Portals", "Breakable Tiles", "Keys"]),
+    "P-15: Santa's Revenge (What!!!) Yellow Smiley": (BASE_ID + 2673, ["Portals", "Breakable Tiles", "Keys"]),
+    "P-16: Towards The Singularity Complete": (BASE_ID + 615, ["Keys", "Jump Pads", "Go Markers"]),
+    "P-16: Towards The Singularity Peak": (BASE_ID + 1615, ["Keys", "Jump Pads", "Go Markers"]),
+    "P-17: One Last Huzzah Complete": (
+        BASE_ID + 616,
+        ["Keys", "Breakable Tiles", "Switch Tiles", "Stop Markers", "Nuke", "Dog", "Metronome"],
+    ),
+    "P-17: One Last Huzzah Peak": (
+        BASE_ID + 1616,
+        ["Keys", "Breakable Tiles", "Switch Tiles", "Stop Markers", "Nuke", "Dog", "Metronome", "Go Markers"],
+    ),
+    "P-17: One Last Huzzah Yellow Smiley": (
+        BASE_ID + 2683,
+        ["Keys", "Breakable Tiles", "Switch Tiles", "Stop Markers"],
+    ),
+    "P-18: Farewell, Uncanny Cat Golf Complete": (BASE_ID + 617, []),
+    "P-18: Farewell, Uncanny Cat Golf Peak": (BASE_ID + 1617, []),
 }
 
-
-# Each Location instance must correctly report the "game" it belongs to.
-# To make this simple, it is common practice to subclass the basic Location class and override the "game" field.
-class APQuestLocation(Location):
-    game = "APQuest"
+class UncannyCatLocation(Location):
+    game = "Uncanny Cat Golf"
 
 
-# Let's make one more helper method before we begin actually creating locations.
-# Later on in the code, we'll want specific subsections of LOCATION_NAME_TO_ID.
-# To reduce the chance of copy-paste errors writing something like {"Chest": LOCATION_NAME_TO_ID["Chest"]},
-# let's make a helper method that takes a list of location names and returns them as a dict with their IDs.
-# Note: There is a minor typing quirk here. Some functions want location addresses to be an "int | None",
-# so while our function here only ever returns dict[str, int], we annotate it as dict[str, int | None].
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
-    return {location_name: LOCATION_NAME_TO_ID[location_name] for location_name in location_names}
+    return {location_name: LOCATION_NAME_TO_ID[location_name][0] for location_name in location_names}
 
 
-def create_all_locations(world: APQuestWorld) -> None:
+def get_excluded_locations(world: UncannyCatWorld) -> set[str]:
+    excluded: set[str] = set()
+    return excluded
+
+
+def create_all_locations(world: UncannyCatWorld) -> None:
     create_regular_locations(world)
     create_events(world)
 
 
-def create_regular_locations(world: APQuestWorld) -> None:
-    # Finally, we need to put the Locations ("checks") into their regions.
-    # Once again, before we do anything, we can grab our regions we created by using world.get_region()
+def create_regular_locations(world: UncannyCatWorld) -> None:
+    excluded = get_excluded_locations(world)
+    for loc_name, (loc_id, _required_items) in LOCATION_NAME_TO_ID.items():
+        if loc_name in excluded:
+            continue
+        if loc_name.startswith("0"):
+            region_name = "World 0 (Tutorial)"
+        elif loc_name.startswith("1"):
+            region_name = "World 1 (Golf Central)"
+        elif loc_name.startswith("2"):
+            region_name = "World 2 (Glowstick City)"
+        elif loc_name.startswith("3"):
+            region_name = "World 3 (Chuckle Park)"
+        elif loc_name.startswith("4"):
+            region_name = "World 4 (Final Frontier)"
+        elif loc_name.startswith("5"):
+            region_name = "World 5 (Elysian Fields)"
+        elif loc_name.startswith("P"):
+            region_name = "World P (Cosmic Championship)"
+        elif loc_name.startswith("E"):
+            region_name = "World E (Endless Levels)"
+        else:
+            region_name = "Summer Villa"
+        region = world.get_region(region_name)
+        region.add_locations({loc_name: loc_id}, UncannyCatLocation)
+
+
+def create_events(world: UncannyCatWorld) -> None:
     overworld = world.get_region("Overworld")
-    top_left_room = world.get_region("Top Left Room")
-    bottom_right_room = world.get_region("Bottom Right Room")
-    right_room = world.get_region("Right Room")
-
-    # One way to create locations is by just creating them directly via their constructor.
-    bottom_left_chest = APQuestLocation(
-        world.player, "Bottom Left Chest", world.location_name_to_id["Bottom Left Chest"], overworld
+    overworld.add_event(
+        "Victory", "Victory", location_type=UncannyCatLocation, item_type=items.UncannyCatItem
     )
-
-    # You can then add them to the region.
-    overworld.locations.append(bottom_left_chest)
-
-    # A simpler way to do this is by using the region.add_locations helper.
-    # For this, you need to have a dict of location names to their IDs (i.e. a subset of location_name_to_id)
-    # Aha! So that's why we made that "get_location_names_with_ids" helper method earlier.
-    # You also need to pass your overridden Location class.
-    bottom_right_room_locations = get_location_names_with_ids(
-        ["Bottom Right Room Left Chest", "Bottom Right Room Right Chest"]
-    )
-    bottom_right_room.add_locations(bottom_right_room_locations, APQuestLocation)
-
-    top_left_room_locations = get_location_names_with_ids(["Top Left Room Chest"])
-    top_left_room.add_locations(top_left_room_locations, APQuestLocation)
-
-    right_room_locations = get_location_names_with_ids(["Right Room Enemy Drop"])
-    right_room.add_locations(right_room_locations, APQuestLocation)
-
-    # Locations may be in different regions depending on the player's options.
-    # In our case, the hammer option puts the Top Middle Chest into its own room called Top Middle Room.
-    top_middle_room_locations = get_location_names_with_ids(["Top Middle Chest"])
-    if world.options.hammer:
-        top_middle_room = world.get_region("Top Middle Room")
-        top_middle_room.add_locations(top_middle_room_locations, APQuestLocation)
-    else:
-        overworld.add_locations(top_middle_room_locations, APQuestLocation)
-
-    # Locations may exist only if the player enables certain options.
-    # In our case, the extra_starting_chest option adds the Bottom Left Extra Chest location.
-    if world.options.extra_starting_chest:
-        # Once again, it is important to stress that even though the Bottom Left Extra Chest location doesn't always
-        # exist, it must still always be present in the world's location_name_to_id.
-        # Whether the location actually exists in the seed is purely determined by whether we create and add it here.
-        bottom_left_extra_chest = get_location_names_with_ids(["Bottom Left Extra Chest"])
-        overworld.add_locations(bottom_left_extra_chest, APQuestLocation)
-
-
-def create_events(world: APQuestWorld) -> None:
-    # Sometimes, the player may perform in-game actions that allow them to progress which are not related to Items.
-    # In our case, the player must press a button in the top left room to open the final boss door.
-    # AP has something for this purpose: "Event locations" and "Event items".
-    # An event location is no different than a regular location, except it has the address "None".
-    # It is treated during generation like any other location, but then it is discarded.
-    # This location cannot be "sent" and its item cannot be "received", but the item can be used in logic rules.
-    # Since we are creating more locations and adding them to regions, we need to grab those regions again first.
-    top_left_room = world.get_region("Top Left Room")
-    final_boss_room = world.get_region("Final Boss Room")
-
-    # One way to create an event is simply to use one of the normal methods of creating a location.
-    button_in_top_left_room = APQuestLocation(world.player, "Top Left Room Button", None, top_left_room)
-    top_left_room.locations.append(button_in_top_left_room)
-
-    # We then need to put an event item onto the location.
-    # An event item is an item whose code is "None" (same as the event location's address),
-    # and whose classification is "progression". Item creation will be discussed more in items.py.
-    # Note: Usually, items are created in world.create_items(), which for us happens in items.py.
-    # However, when the location of an item is known ahead of time (as is the case with an event location/item pair),
-    # it is common practice to create the item when creating the location.
-    # Since locations also have to be finalized after world.create_regions(), which runs before world.create_items(),
-    # we'll create both the event location and the event item in our locations.py code.
-    button_item = items.APQuestItem("Top Left Room Button Pressed", ItemClassification.progression, None, world.player)
-    button_in_top_left_room.place_locked_item(button_item)
-
-    # A way simpler way to do create an event location/item pair is by using the region.create_event helper.
-    # Luckily, we have another event we want to create: The Victory event.
-    # We will use this event to track whether the player can win the game.
-    # The Victory event is a completely optional abstraction - This will be discussed more in set_rules().
-    final_boss_room.add_event(
-        "Final Boss Defeated", "Victory", location_type=APQuestLocation, item_type=items.APQuestItem
-    )
-
-    # If you create all your regions and locations line-by-line like this,
-    # the length of your create_regions might get out of hand.
-    # Many worlds use more data-driven approaches using dataclasses or NamedTuples.
-    # However, it is worth understanding how the actual creation of regions and locations works,
-    # That way, we're not just mindlessly copy-pasting! :)
