@@ -16,6 +16,31 @@ class GoalLevel(Choice):
     option_5_18 = 2
     option_P_17 = 3
 
+class PrismUnlockAmount(Range):
+    """
+    How many prisms are required to be obtained in total before your goal level unlocks.
+    Requirement may be forcefully lowered to account for disabled levels or peak checks being disabled.
+    You can always view the required amount you need in game to reference it.
+    """
+    display_name = "Goal Level Prism Amount"
+
+    default = 200
+    range_start = 50
+    range_end = 560
+
+class LevelUnlockStyle(Choice):
+    """
+    How level unlocks are handled.
+
+    Individual: All level unlocks are individual items you must be sent
+    World: Worlds are unlocks that you must be sent, you get access to all levels after being sent that world
+    """
+    display_name = "Level Unlock Style"
+
+    default = 0
+    option_individual = 0
+    option_world = 1
+
 class GimmickLocking(DefaultOnToggle):
     """
     Lock level gimmicks such as wormholes, dogs, toggle switches, etc. behind items in the multiworld.
@@ -71,7 +96,10 @@ class PanicMode(Toggle):
 
 @dataclass
 class UncannyCatOptions(PerGameCommonOptions):
+    goal_level: GoalLevel
+    prism_unlock_amount: PrismUnlockAmount
     gimmick_lock: GimmickLocking
+    level_unlock_style: LevelUnlockStyle
     minigames: Minigames
     world_5_levels: World5Levels
     world_p_levels: WorldPLevels

@@ -3,9 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from BaseClasses import Region
-from rule_builder.rules import Has, HasFromList
-
-from .rules import OutOfLogic, items
 
 if TYPE_CHECKING:
     from .world import UncannyCatWorld
@@ -19,7 +16,7 @@ ALL_REGIONS = [
     "World 4 (Final Frontier)",
     "World 5 (Elysian Fields)",
     "World P (Cosmic Championship)",
-    "World E (Endless Levels)"
+    "World E (Endless Levels)",
     "Summer Villa", # Minigame area
 ]
 
@@ -32,6 +29,7 @@ def create_and_connect_regions(world: UncannyCatWorld) -> None:
     def connect(from_name: str, to_name: str, rule=None) -> None:
         world.create_entrance(regions[from_name], regions[to_name], rule)
 
+    connect("Menu", "World 0 (Tutorial)")
     connect("Menu", "World 1 (Golf Central)")
     connect("Menu", "World 2 (Glowstick City)")
     connect("Menu", "World 3 (Chuckle Park)")

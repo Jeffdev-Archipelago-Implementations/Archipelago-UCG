@@ -23,7 +23,7 @@ class UncannyCatWorld(World):
     item_name_to_id = items.ITEM_NAME_TO_ID
     item_name_groups = items.ITEM_GROUPS
 
-    origin_region_name = "Overworld"
+    origin_region_name = "Menu"
 
     ut_can_gen_without_yaml = True
     glitches_item_name: str = "out_of_logic"
@@ -39,6 +39,24 @@ class UncannyCatWorld(World):
                 opt = getattr(self.options, key, None)
                 if opt is not None:
                     setattr(self.options, key, opt.from_any(value))
+
+        # A goal level in World 5 or World P forces that world's levels on
+        goal = items.GOAL_LEVEL[self.options.goal_level.value]
+        goal_world = items.world_prefix(goal)
+        if goal_world == "5":
+            self.options.world_5_levels.value = 1
+        elif goal_world == "P":
+            self.options.world_p_levels.value = 1
+
+        # Ensure prism count always works
+        prisms_per_level = 5 if self.options.peak_checks else 4
+        max_prisms = (5 + sum(rules.levels_per_unlock_item(self).values())) * prisms_per_level
+        self.options.prism_unlock_amount.value = min(self.options.prism_unlock_amount.value, max_prisms)
+
+
+        # Chill Mode forces panic mode off
+        if self.options.chill_mode:
+            self.options.panic_mode.value = 0
 
     def create_regions(self) -> None:
         regions.create_and_connect_regions(self)
@@ -60,7 +78,17 @@ class UncannyCatWorld(World):
 
     def fill_slot_data(self) -> Mapping[str, Any]:
         return {
-            "goal":        sorted(self.options.goal.value)
+            "goal_level": self.options.goal_level.value,
+            "prism_unlock_amount": self.options.prism_unlock_amount.value,
+            "gimmick_lock": self.options.gimmick_lock.value,
+            "level_unlock_style": self.options.level_unlock_style.value,
+            "minigames": self.options.minigames.value,
+            "world_5_levels": self.options.world_5_levels.value,
+            "world_p_levels": self.options.world_p_levels.value,
+            "world_e_levels": self.options.world_e_levels.value,
+            "peak_checks": self.options.peak_checks.value,
+            "chill_mode": self.options.chill_mode.value,
+            "panic_mode": self.options.panic_mode.value,
         }
 
     @staticmethod

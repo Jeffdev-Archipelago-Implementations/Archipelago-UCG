@@ -1,172 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import ceil
 from typing import TYPE_CHECKING, override
 
 from BaseClasses import CollectionState
 from NetUtils import JSONMessagePart
-from rule_builder.rules import CanReachRegion, Has, HasFromList, Rule
+from Options import OptionError
+from rule_builder.rules import CanReachRegion, Has, HasFromList, Rule, And, HasAll, True_
 
-from .items import ITEM_NAME_TO_ID
-from .locations import LOCATION_NAME_TO_ID
+from . import items
+from .items import GOAL_LEVEL, ITEM_GROUPS
+from .locations import LOCATION_DATA, get_excluded_locations, level_item_name
 
 
 if TYPE_CHECKING:
     from .world import UncannyCatWorld
-
-"""
-[NR] means not required, [NRP] means not required for peak
-All gimmicks are logically required for peaks unless specified
-World 0: N/A
-
-World 1:
-1-1: N/A
-1-2: N/A
-1-3: N/A
-1-4: Breakable Tiles
-1-5: Breakable Tiles
-1-6: Breakable Tiles (maybe possible without?)
-1-7: Breakable Tiles
-1-8: N/A
-1-9: N/A
-1-10: N/A
-1-11: N/A
-1-12: N/A
-1-13: Keys
-1-14: Keys
-1-15: Keys
-1-16: Keys
-1-17: Keys
-1-18: N/A
-
-World 2:
-2-1: N/A
-2-2: Stop Markers [NR, NRP]
-2-3: Stop Markers [NR, NRP]
-2-4: Go Markers [NR]
-2-5: Keys, Go Markers [NR], Stop Markers [NR]
-2-6: Breakable Tiles, Go Markers [NR], Stop Markers [NR]
-2-7: Stop Markers [NR, NRP]
-2-8: Stop Markers [NR], Go Markers [NR]
-2-9: Stop Markers [NR], Go Markers [NR]
-2-10: Jump Pads, Go Markers [NR, NRP]
-2-11: Keys, Breakable Tiles, Jump Pads, Go Markers
-2-12: N/A
-2-13: Keys, Jump Pads, Go Markers [NR], Stop Markers [NR]
-2-14: Keys, Breakable Tiles [NR], Jump Pads [NR], Go Markers [NR], Stop Markers [NR]
-2-15: Keys, Jump Pads, Stop Markers [NR], Go Markers [NR]
-2-16: Jump Pads, Stop Markers [NR], Go Markers [NR]
-2-17: Keys, Jump Pads, Stop Markers [NR]
-2-18: Jump Pads
-
-World 3:
-3-1: N/A
-3-1 Yellow Smiley: N/A
-3-2: Breakable Tiles, Stop Markers [NR]
-3-2 Yellow Smiley: N/A
-3-3: Switch Tiles
-3-4: Switch Tiles
-3-5: Keys, Breakable Tiles [NR]
-3-5 Yellow Smiley: N/A
-3-6: Breakable Tiles
-3-7: Keys, Switch Tiles [NR, NRP], Jump Pads [NR], Stop Markers [NR], Go Markers [NR]
-3-7 Yellow Smiley: Keys, Stop Markers
-3-8: Breakable Tiles
-3-9: Breakable Tiles
-3-10: N/A
-3-11: Keys, Jump Pads
-3-11 Red Smiley: N/A
-3-11 Green Smiley: N/A
-3-11 Blue Smiley: N/A
-3-11 Yellow Smiley: Keys, Jump Pads
-3-12: Switch Tiles, Stop Markers [NR], Go Markers [NR]
-3-12 Red Smiley: N/A
-3-12 Yellow Smiley: Switch Tiles
-3-12 Green Smiley: Switch Tiles
-3-12 Blue Smiley: Switch Tiles
-3-12 Orange Smiley: Switch Tiles, Go Markers, Stop Markers
-3-13: Dog, Switch Tiles
-3-14: Dog, Switch Tiles [NR]
-3-15: Dog, Switch Tiles
-3-16: Dog
-3-16 Red Smiley: Dog
-3-17: Keys, Dog, Jump Pads, Go Markers [NR], Stop Markers [NR], Switch Tiles: [NR, NRP]
-3-17 Yellow Smiley: Dog, Jump Pads
-3-17 Blue Smiley: Dog, Jump Pads
-3-18: Jump Pads
-
-World 4:
-4-1: Breakable Tiles [NR, NRP]
-4-2: Switch Tiles
-4-3: Portals
-4-4: Portals, Stop Markers [NR, NRP], Go Markers [NR, NRP], Switch Tiles [NR, NRP]
-4-5: Switch Tiles
-4-6: Portals, Jump Pads
-4-7: Dog, Jump Pads [NR], Go Markers [NR], Stop Markers [NR, NRP], Nuke [NR, NRP]
-4-8: Nuke, Stop Markers, Switch Tiles
-4-9: Jump Pads, Stop Markers, Keys [NRP], Nuke [NRP]
-4-10: Dog
-4-11: Dog, Breakable Tiles
-4-12: Keys, Jump Pads
-4-13: Breakable Tiles
-4-14: Keys
-4-15: Keys, Stop Markers [NR, NRP]
-4-16: Breakable Tiles, Nukes
-4-17: Switch Tiles, Portals, Stop Markers [NR]
-4-18: N/A (remove the wall barrier)
-
-World 5:
-5-1: N/A
-5-2: N/A
-5-3: N/A
-5-4: Golf Balls
-5-5: Golf Balls
-5-6: Breakable Tiles, Golf Balls
-5-7: Golf Balls
-5-8: Golf Balls
-5-9: Breakable Tiles, Golf Balls
-5-10: Breakable Tiles, Golf Balls, Go Markers [NR], Stop Markers [NR]
-5-11: Golf Balls, Jump Pads
-5-12: Golf Balls, Switch Tiles
-5-12 Blue Smiley: N/A
-5-13: Golf Balls
-5-14: Golf Balls, Switch Tiles, Nuke
-5-15: Golf Balls, Portal OR Jump Pad (Peak requires both)
-5-16: Golf Balls
-5-17: Golf Balls
-5-18: Landmines
-
-World P:
-P-1: N/A (remove the wall barrier)
-P-2: Keys, Jump Pads, Breakable Tiles [NR, NRP], Go Markers [NR, NRP]
-P-3: Switch Tiles, Stop Markers [NR], Go Markers [NR, NRP]
-P-4: Switch Tiles
-P-5: Breakable Tiles, Stop Markers [NR], Go Markers [NR, NRP]
-P-6: Metronome
-P-7: Metronome, Switch Tiles
-P-8: Metronome, Portals
-P-9: Metronome
-P-10: Metronome, Keys, Nuke [NR, NRP]
-P-11: Metronome, Portals
-P-11 Yellow Smiley: Metronome, Portals
-P-12: Switch Tiles, Jump Pads
-P-13: N/A
-P-14: N/A
-P-15: Portals, Breakable Tiles, Keys
-P-15 Yellow Smiley: Portals, Breakable Tiles, Keys
-P-16: Keys, Jump Pads, Go Markers
-P-17: Keys, Breakable Tiles, Switch Tiles, Stop Markers, Nuke, Dog, Metronome, Go Markers [NR]
-P-17 Yellow Smiley: Keys, Breakable Tiles, Switch Tiles, Stop Markers
-P-18: N/A
-
-World E:
-E-0: N/A
-E-1: Keys
-E-2: N/A
-E-3: Switch Tiles, Jump Pads, Go Markers [NR, NRP]
-E-4: Portals, Jump Pads, Breakable Tiles, Go Markers [NR]
-"""
-
 
 @dataclass
 class OutOfLogic(Rule["UncannyCatWorld"], game="Uncanny Cat Golf"):
@@ -207,13 +56,99 @@ def set_all_rules(world: UncannyCatWorld) -> None:
     set_completion_condition(world)
 
 
+def gimmick_rule(requirements: list[str]) -> Rule[UncannyCatWorld] | None:
+    """Turn a requirement list into one rule. "A|B is just an OR."""
+    all_of = [req for req in requirements if "|" not in req]
+    either_of = [HasFromList(*req.split("|")) for req in requirements if "|" in req]
+    if not all_of and not either_of:
+        return None
+    return And(HasAll(*all_of), *either_of)
+
+
+def location_rule(world: UncannyCatWorld, location_name: str) -> Rule[UncannyCatWorld] | None:
+    _loc_id, requirements = LOCATION_DATA[location_name]
+    parts: list[Rule[UncannyCatWorld]] = []
+
+    unlock = items.unlock_item_name(world, level_item_name(location_name))
+    if unlock is not None:
+        parts.append(Has(unlock))
+    if world.options.gimmick_lock:
+        gimmicks = gimmick_rule(requirements)
+        if gimmicks is not None:
+            parts.append(gimmicks)
+
+    return And(*parts) if parts else None
+
+
 def set_all_location_rules(world: UncannyCatWorld) -> None:
-    def rule(name: str, r) -> None:
+    for location_name in LOCATION_DATA:
+        rule = location_rule(world, location_name)
+        if rule is None:
+            continue
+        try:
+            location = world.get_location(location_name)
+        except KeyError:
+            continue  
+        world.set_rule(location, rule)
+
+    set_location_rule_exceptions(world)
+
+
+def set_location_rule_exceptions(world: UncannyCatWorld) -> None:
+    """Glitched logic stuff goes here"""
+    def rule(name: str, r: Rule[UncannyCatWorld]) -> None:
         try:
             world.set_rule(world.get_location(name), r)
         except KeyError:
             return
 
+    # EXAMPLE v
+    # rule(
+    #    "1-6: Roundabout Complete",
+    #    Has("1-6: Roundabout")
+    #    & (Has("Breakable Tiles") | OutOfLogic("1-6 can be cleared without breaking tiles")),
+    #)
+
+def levels_per_unlock_item(world: UncannyCatWorld) -> dict[str, int]:
+    """How many playable levels each unlock item in the pool grants. One each under individual unlocks."""
+    excluded = get_excluded_locations(world)
+    levels_by_unlock: dict[str, set[str]] = {}
+    for location_name in LOCATION_DATA:
+        if location_name in excluded:
+            continue
+        level = level_item_name(location_name)
+        unlock = items.unlock_item_name(world, level)
+        if unlock is not None:
+            levels_by_unlock.setdefault(unlock, set()).add(level)
+    return {unlock: len(levels) for unlock, levels in levels_by_unlock.items()}
+
+
+def has_enough_prisms(world: UncannyCatWorld) -> Rule[UncannyCatWorld] | None:
+    prisms_per_level = 5 if world.options.peak_checks else 4
+    levels_needed = ceil(world.options.prism_unlock_amount.value / prisms_per_level) - 5  # world 0 is free
+    if levels_needed <= 0:
+        return None
+    unlocks = levels_per_unlock_item(world)
+    total = 0
+    for count, levels in enumerate(sorted(unlocks.values()), start=1):
+        total += levels
+        if total >= levels_needed:
+            return HasFromList(*unlocks, count=count)
+    raise OptionError(f"Uncanny Cat Golf ({world.player_name}): prism requirement exceeds available levels")
+
+
 def set_completion_condition(world: UncannyCatWorld) -> None:
-    # TODO: ADD
-    pass
+    goal = GOAL_LEVEL[world.options.goal_level.value]
+    parts: list[Rule[UncannyCatWorld]] = []
+
+    if world.options.gimmick_lock:
+        gimmicks = gimmick_rule(LOCATION_DATA[f"{goal} Complete"][1])
+        if gimmicks is not None:
+            parts.append(gimmicks)
+
+    prisms = has_enough_prisms(world)
+    if prisms is not None:
+        parts.append(prisms)
+
+    world.set_rule(world.get_location("Victory"), And(*parts) if parts else True_())
+    world.set_completion_rule(Has("Victory"))

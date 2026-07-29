@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from BaseClasses import Item, ItemClassification
+from Options import OptionError
 
 
 if TYPE_CHECKING:
@@ -10,14 +11,12 @@ if TYPE_CHECKING:
 
 BASE_ID = 100
 
+GOAL_LEVEL = {0: "3-18: The Chuckle Coaster", 1: "4-17: CATaclysmic CATastrophe",
+              2: "5-18: The End Is Neigh.", 3: "P-17: One Last Huzzah"}
+
 # Every item must have a unique integer ID associated with it.
 ITEM_NAME_TO_ID = {
     # Levels
-    "0-1: Welcome to UNCANNY CAT GOLF!": BASE_ID + 0,
-    "0-2: Hello Walls": BASE_ID + 1,
-    "0-3: Meet the Slopes": BASE_ID + 2,
-    "0-4: Pretty Pennies": BASE_ID + 3,
-    "0-5: Onward and Golfward!": BASE_ID + 4,
     "1-1: Welcome to GOLF CENTRAL!": BASE_ID + 100,
     "1-2: Getting Around": BASE_ID + 101,
     "1-3: A New Angle": BASE_ID + 102,
@@ -126,6 +125,16 @@ ITEM_NAME_TO_ID = {
     "P-16: Towards The Singularity": BASE_ID + 615,
     "P-17: One Last Huzzah": BASE_ID + 616,
     "P-18: Farewell, Uncanny Cat Golf": BASE_ID + 617,
+    "E-0: Deep Breaths...": BASE_ID + 700,
+    "E-1: Feline Beeline": BASE_ID + 701,
+    "E-2: T-T-Tilted": BASE_ID + 702,
+    "E-3: Lying Face": BASE_ID + 703,
+    "E-4: Tricky Thicket": BASE_ID + 704,
+    "E-5: Three Ring Circus": BASE_ID + 705,
+    "E-6: But Passion Is Mortal...": BASE_ID + 706,
+    "E-7: The Key to Failure": BASE_ID + 707,
+    "E-8: HE'S IN THE WALLS!!!": BASE_ID + 708,
+    "E-9: Infinity Plaza": BASE_ID + 709,
 
     # Worlds
     "World 1 (Golf Central) Unlock": BASE_ID + 1000,
@@ -160,7 +169,10 @@ ITEM_NAME_TO_ID = {
     "Jumpy Modifier Trap": BASE_ID + 3004,
     "Dizzy Modifier Trap": BASE_ID + 3005,
     "Missile Strike Modifier Trap": BASE_ID + 3006,
-    "Sticky Modifier Trap": BASE_ID + 3007
+    "Sticky Modifier Trap": BASE_ID + 3007,
+
+    # Filler
+    "Golf!": BASE_ID + 4000
 }
 
 # All level and world unlocks are progression deprioritzed skip balancing, and thus are excluded from this list for simplicity.
@@ -185,21 +197,112 @@ DEFAULT_ITEM_CLASSIFICATIONS = {
     "Jumpy Modifier Trap": ItemClassification.trap,
     "Dizzy Modifier Trap": ItemClassification.trap,
     "Missile Strike Modifier Trap": ItemClassification.trap,
-    "Sticky Modifier Trap": ItemClassification.trap
+    "Sticky Modifier Trap": ItemClassification.trap,
+
+    "Golf!": ItemClassification.filler
+}
+
+LEVEL_ITEM_NAMES: set[str] = {
+    name for name, item_id in ITEM_NAME_TO_ID.items() if item_id < BASE_ID + 1000
 }
 
 ITEM_GROUPS: dict[str, set[str]] = {
+    "Levels": LEVEL_ITEM_NAMES,
+    "Worlds": { 
+        "World 1 (Golf Central) Unlock",
+        "World 2 (Glowstick City) Unlock",
+        "World 3 (Chuckle Park) Unlock",
+        "World 4 (Final Frontier) Unlock",
+        "World 5 (Elysian Fields) Unlock",
+        "World P (Cosmic Championship) Unlock",
+        "World E (Endless Levels) Unlock",
+    },
     "Gimmicks": { "Breakable Tiles", "Keys", "Stop Markers", "Go Markers", "Jump Pads", "Switch Tiles", "Dog", "Portals", "Nuke", "Golf Balls", "Landmines", "Metronome"},
     "Traps": { "Burst Modifier Trap", "Telekinesis Modifier Trap", "Little Buddy Modifier Trap", "Parry Modifier Trap", "Jumpy Modifier Trap", "Dizzy Modifier Trap", "Missile Strike Modifier Trap", "Sticky Modifier Trap"}
 }
 
+FILLER_ITEM_NAME = "Golf!"
+TRAP_CHANCE = 25 # Percentage of traps replacing filler
 
-def is_progression_item(world: UncannyCatWorld, name: str) -> bool:
-    prog_item = (DEFAULT_ITEM_CLASSIFICATIONS[name] in (
-        ItemClassification.progression,
-        ItemClassification.progression_deprioritized_skip_balancing,
-    ) or "-" in name)
-    return
+WORLD_UNLOCK_BY_PREFIX: dict[str, str] = {
+    "1": "World 1 (Golf Central) Unlock",
+    "2": "World 2 (Glowstick City) Unlock",
+    "3": "World 3 (Chuckle Park) Unlock",
+    "4": "World 4 (Final Frontier) Unlock",
+    "5": "World 5 (Elysian Fields) Unlock",
+    "P": "World P (Cosmic Championship) Unlock",
+    "E": "World E (Endless Levels) Unlock",
+}
+
+# Gimmicks that are dependent on worlds being enabled
+GIMMICK_WORLD_PREFIX: dict[str, str] = {
+    "Golf Balls": "5",
+    "Landmines": "5",
+    "Metronome": "P",
+}
+
+
+def world_prefix(level_name: str) -> str:
+    """5-18: The End Is Neigh. -> "5". P-17: One Last Huzzah -> "P"."""
+    return level_name.split("-", 1)[0]
+
+
+def get_included_world_prefixes(world: UncannyCatWorld) -> set[str]:
+    """The worlds whose levels exist as checks under the player's options."""
+    prefixes = {"0", "1", "2", "3", "4"}
+    if world.options.world_5_levels:
+        prefixes.add("5")
+    if world.options.world_p_levels:
+        prefixes.add("P")
+    if world.options.world_e_levels:
+        prefixes.add("E")
+    return prefixes
+
+
+def unlock_item_name(world: UncannyCatWorld, level_name: str) -> str | None:
+    """The item that unlocks the given level, or None if the level requires nothing."""
+    from .options import LevelUnlockStyle
+
+    if world.options.level_unlock_style == LevelUnlockStyle.option_individual and level_name in LEVEL_ITEM_NAMES:
+        return level_name
+    return WORLD_UNLOCK_BY_PREFIX.get(world_prefix(level_name))
+
+
+def get_unlock_item_names(world: UncannyCatWorld) -> list[str]:
+    """Every level/world unlock item needed to reach the locations this world actually creates, without duplicates."""
+    # Imported here rather than at module scope because locations.py imports this module.
+    from .locations import LOCATION_DATA, get_excluded_locations, level_item_name
+
+    excluded = get_excluded_locations(world)
+    names: list[str] = []
+    seen: set[str] = set()
+    for location_name in LOCATION_DATA:
+        if location_name in excluded:
+            continue
+        name = unlock_item_name(world, level_item_name(location_name))
+        if name is not None and name not in seen:
+            seen.add(name)
+            names.append(name)
+    return names
+
+
+def get_gimmick_item_names(world: UncannyCatWorld) -> list[str]:
+    """The gimmick items that are actually required by logic under the player's options."""
+    if not world.options.gimmick_lock:
+        return []
+    included = get_included_world_prefixes(world)
+    return [
+        name for name in ITEM_GROUPS["Gimmicks"]
+        if GIMMICK_WORLD_PREFIX.get(name, "0") in included
+    ]
+
+
+def get_item_classification(name: str) -> ItemClassification:
+    if name in DEFAULT_ITEM_CLASSIFICATIONS:
+        return DEFAULT_ITEM_CLASSIFICATIONS[name]
+    if name in LEVEL_ITEM_NAMES or name in ITEM_GROUPS["Worlds"]:
+        return ItemClassification.progression_deprioritized_skip_balancing
+    raise KeyError(f"No classification defined for Uncanny Cat Golf item {name!r}")
 
 
 class UncannyCatItem(Item):
@@ -207,25 +310,29 @@ class UncannyCatItem(Item):
 
 
 def get_random_filler_item_name(world: UncannyCatWorld) -> str:
-    return "Golf!"
+    if world.random.randint(0, 99) < TRAP_CHANCE:
+        return world.random.choice(sorted(ITEM_GROUPS["Traps"]))
+    return FILLER_ITEM_NAME
 
 
 def create_item_with_correct_classification(world: UncannyCatWorld, name: str) -> UncannyCatItem:
-    classification = DEFAULT_ITEM_CLASSIFICATIONS[name]
-    return UncannyCatItem(name, classification, ITEM_NAME_TO_ID[name], world.player)
+    return UncannyCatItem(name, get_item_classification(name), ITEM_NAME_TO_ID[name], world.player)
 
 
 def create_all_items(world: UncannyCatWorld) -> None:
-    # Create one of every progression item.
     itempool: list[Item] = [
         world.create_item(name)
-        for name in DEFAULT_ITEM_CLASSIFICATIONS
-        if is_progression_item(world, name)
+        for name in get_unlock_item_names(world) + get_gimmick_item_names(world)
     ]
 
-    # Fill remaining location slots with filler.
+    # Fill remaining location slots with filler/traps
     number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
     needed_filler = number_of_unfilled_locations - len(itempool)
+    if needed_filler < 0:
+        raise OptionError(
+            f"Uncanny Cat Golf ({world.player_name}) created {len(itempool)} items for only "
+            f"{number_of_unfilled_locations} locations. Enable more worlds or peak checks."
+        )
     itempool += [world.create_filler() for _ in range(needed_filler)]
 
     world.multiworld.itempool += itempool

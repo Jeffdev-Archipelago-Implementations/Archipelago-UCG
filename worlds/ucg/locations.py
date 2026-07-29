@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 BASE_ID = 100
 
 # name -> (id, list of gimmick items logically required to reach the check)
-LOCATION_NAME_TO_ID: dict[str, tuple[int, list[str]]] = {
+LOCATION_DATA: dict[str, tuple[int, list[str]]] = {
     "0-1: Welcome to UNCANNY CAT GOLF! Complete": (BASE_ID + 0, []),
     "0-1: Welcome to UNCANNY CAT GOLF! Peak": (BASE_ID + 1000, []),
     "0-2: Hello Walls Complete": (BASE_ID + 1, []),
@@ -289,18 +289,69 @@ LOCATION_NAME_TO_ID: dict[str, tuple[int, list[str]]] = {
     ),
     "P-18: Farewell, Uncanny Cat Golf Complete": (BASE_ID + 617, []),
     "P-18: Farewell, Uncanny Cat Golf Peak": (BASE_ID + 1617, []),
+
+    "E-0: Deep Breaths... Complete": (BASE_ID + 700, []),
+    "E-0: Deep Breaths... Peak": (BASE_ID + 1700, []),
+    "E-1: Feline Beeline Complete": (BASE_ID + 701, ["Keys"]),
+    "E-1: Feline Beeline Peak": (BASE_ID + 1701, ["Keys"]),
+    "E-2: T-T-Tilted Complete": (BASE_ID + 702, []),
+    "E-2: T-T-Tilted Peak": (BASE_ID + 1702, []),
+    "E-3: Lying Face Complete": (BASE_ID + 703, ["Switch Tiles", "Jump Pads"]),
+    "E-3: Lying Face Peak": (BASE_ID + 1703, ["Switch Tiles", "Jump Pads"]),
+    "E-4: Tricky Thicket Complete": (BASE_ID + 704, ["Portals", "Jump Pads", "Breakable Tiles"]),
+    "E-4: Tricky Thicket Peak": (BASE_ID + 1704, ["Portals", "Jump Pads", "Breakable Tiles", "Go Markers"]),
+    "E-5: Three Ring Circus Complete": (BASE_ID + 705, []),
+    "E-5: Three Ring Circus Peak": (BASE_ID + 1705, []),
+    "E-6: But Passion Is Mortal... Complete": (BASE_ID + 706, ["Switch Tiles"]),
+    "E-6: But Passion Is Mortal... Peak": (BASE_ID + 1706, ["Switch Tiles", "Stop Markers", "Go Markers"]),
+    "E-7: The Key to Failure Complete": (BASE_ID + 707, ["Keys", "Jump Pads"]),
+    "E-7: The Key to Failure Peak": (BASE_ID + 1707, ["Keys", "Jump Pads"]),
+    "E-8: HE'S IN THE WALLS!!! Complete": (BASE_ID + 708, ["Keys", "Jump Pads"]),
+    "E-8: HE'S IN THE WALLS!!! Peak": (BASE_ID + 1708, ["Keys", "Jump Pads"]),
+    "E-9: Infinity Plaza Complete": (BASE_ID + 709, ["Keys", "Breakable Tiles"]),
+    "E-9: Infinity Plaza Peak": (BASE_ID + 1709, ["Keys", "Breakable Tiles"]),
 }
+
+# The world class needs a plain name -> id mapping, without the logic requirements attached.
+LOCATION_NAME_TO_ID: dict[str, int] = {name: data[0] for name, data in LOCATION_DATA.items()}
+
+LEVEL_LOCATION_SUFFIXES = (
+    " Complete", " Peak",
+    " Red Smiley", " Green Smiley", " Blue Smiley", " Yellow Smiley", " Orange Smiley",
+)
+
 
 class UncannyCatLocation(Location):
     game = "Uncanny Cat Golf"
 
 
+def level_item_name(location_name: str) -> str:
+    """"1-4: Breakthrough! Peak" -> "1-4: Breakthrough!" (the level unlock item)."""
+    for suffix in LEVEL_LOCATION_SUFFIXES:
+        if location_name.endswith(suffix):
+            return location_name[: -len(suffix)]
+    return location_name
+
+
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
-    return {location_name: LOCATION_NAME_TO_ID[location_name][0] for location_name in location_names}
+    return {location_name: LOCATION_NAME_TO_ID[location_name] for location_name in location_names}
 
 
 def get_excluded_locations(world: UncannyCatWorld) -> set[str]:
+    """Locations that don't exist under the player's options, and so get neither a check nor an unlock item."""
+    included_worlds = items.get_included_world_prefixes(world)
+    # The goal level is not included
+    goal_level = items.GOAL_LEVEL[world.options.goal_level.value]
+
     excluded: set[str] = set()
+    for location_name in LOCATION_NAME_TO_ID:
+        level = level_item_name(location_name)
+        if items.world_prefix(level) not in included_worlds:
+            excluded.add(location_name)
+        elif level == goal_level:
+            excluded.add(location_name)
+        elif not world.options.peak_checks and location_name.endswith(" Peak"):
+            excluded.add(location_name)
     return excluded
 
 
@@ -311,7 +362,7 @@ def create_all_locations(world: UncannyCatWorld) -> None:
 
 def create_regular_locations(world: UncannyCatWorld) -> None:
     excluded = get_excluded_locations(world)
-    for loc_name, (loc_id, _required_items) in LOCATION_NAME_TO_ID.items():
+    for loc_name, loc_id in LOCATION_NAME_TO_ID.items():
         if loc_name in excluded:
             continue
         if loc_name.startswith("0"):
@@ -337,7 +388,8 @@ def create_regular_locations(world: UncannyCatWorld) -> None:
 
 
 def create_events(world: UncannyCatWorld) -> None:
-    overworld = world.get_region("Overworld")
-    overworld.add_event(
+    # Victory lives in Menu because it is always physically reachable; its access rule is what actually gates it.
+    menu = world.get_region("Menu")
+    menu.add_event(
         "Victory", "Victory", location_type=UncannyCatLocation, item_type=items.UncannyCatItem
     )
