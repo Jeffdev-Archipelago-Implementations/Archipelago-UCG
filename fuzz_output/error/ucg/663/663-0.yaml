@@ -1,0 +1,28 @@
+description: Uncanny Cat Golf Template, generated with https://github.com/Eijebong/Archipelago-fuzzer/tree/0.6.2
+game: Uncanny Cat Golf
+requires:
+  version: 0.6.7
+Uncanny Cat Golf:
+  progression_balancing: 53
+  accessibility: minimal
+  goal_level: '3_18'
+  prism_unlock_amount: 79
+  gimmick_lock: 'true'
+  level_unlock_style: individual
+  minigames: 'false'
+  world_5_levels: 'true'
+  world_p_levels: 'true'
+  world_e_levels: 'false'
+  peak_checks: 'false'
+  rank_check_difficulty: ok
+  chill_mode: 'true'
+  panic_mode: 'false'
+  local_items: []
+  non_local_items: []
+  start_inventory: {}
+  start_hints: []
+  start_location_hints: []
+  exclude_locations: []
+  priority_locations: []
+  item_links: []
+  plando_items: []

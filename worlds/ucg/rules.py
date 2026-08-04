@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import ceil
 from typing import TYPE_CHECKING, override
 
 from BaseClasses import CollectionState
 from NetUtils import JSONMessagePart
-from Options import OptionError
-from rule_builder.rules import CanReachRegion, Has, HasFromList, Rule, And, HasAll, True_
+from rule_builder.rules import CanReachRegion, Has, HasFromList, Rule, And, HasAll
 
 from . import items
 from .items import GOAL_LEVEL, ITEM_GROUPS
 from .locations import LOCATION_DATA, get_excluded_locations, level_item_name
+from .options import RankCheckDifficulty
 
 
 if TYPE_CHECKING:
@@ -32,8 +31,8 @@ class OutOfLogic(Rule["UncannyCatWorld"], game="Uncanny Cat Golf"):
             return state.has(self.glitches_item_name, self.player)
 
         @override
-        def item_dependencies(self):
-            yield self.glitches_item_name, self.player
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return {self.glitches_item_name: {id(self)}}
 
         @override
         def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
@@ -102,39 +101,152 @@ def set_location_rule_exceptions(world: UncannyCatWorld) -> None:
         except KeyError:
             return
 
-    # EXAMPLE v
-    # rule(
-    #    "1-6: Roundabout Complete",
-    #    Has("1-6: Roundabout")
-    #    & (Has("Breakable Tiles") | OutOfLogic("1-6 can be cleared without breaking tiles")),
-    #)
+# Prisms a single level pays out, by the best rank you can actually get in it.
+PEAK_PRISMS = 5
+GOOD_PRISMS = 4
+OK_PRISMS = 3
+COMPLETE_PRISMS = 2
+"""What a level is worth when you can finish it but can't rank up, because a gimmick it needs is missing."""
 
-def levels_per_unlock_item(world: UncannyCatWorld) -> dict[str, int]:
-    """How many playable levels each unlock item in the pool grants. One each under individual unlocks."""
+
+GimmickRequirement = tuple[frozenset[str], ...]
+"""One frozenset per requirement. Any member of a set satisfies that requirement, all sets must be met."""
+
+PrismTier = tuple[int, GimmickRequirement]
+"""What a rank pays out, and the gimmicks needed to reach it."""
+
+
+def rank_check_prisms(world: UncannyCatWorld) -> int:
+    """What the always-on rank check is worth, i.e. how high a rank the player signed up to hit."""
+    if world.options.rank_check_difficulty == RankCheckDifficulty.option_good:
+        return GOOD_PRISMS
+    return OK_PRISMS
+
+
+def prism_tiers(world: UncannyCatWorld, include_peak: bool) -> list[tuple[int, str]]:
+    """(prisms, rank location suffix) from the best rank down. The first tier you can reach is what you bank."""
+    tiers: list[tuple[int, str]] = []
+    if include_peak:
+        tiers.append((PEAK_PRISMS, " Peak Rank"))
+    tiers.append((rank_check_prisms(world), " Good Rank"))
+    return tiers
+
+
+def gimmick_alternatives(requirements: list[str]) -> GimmickRequirement:
+    """["Keys", "Portals|Jump Pads"] -> one frozenset per requirement, any member of which satisfies it."""
+    return tuple(frozenset(requirement.split("|")) for requirement in requirements)
+
+
+def seed_levels(world: UncannyCatWorld) -> list[tuple[str, str | None]]:
+    """(level, unlock item) for every level in the seed. World 0 has no unlock item, so it is always playable."""
     excluded = get_excluded_locations(world)
-    levels_by_unlock: dict[str, set[str]] = {}
+    levels: list[tuple[str, str | None]] = []
+    seen: set[str] = set()
     for location_name in LOCATION_DATA:
-        if location_name in excluded:
-            continue
         level = level_item_name(location_name)
-        unlock = items.unlock_item_name(world, level)
-        if unlock is not None:
-            levels_by_unlock.setdefault(unlock, set()).add(level)
-    return {unlock: len(levels) for unlock, levels in levels_by_unlock.items()}
+        if level in seen:
+            continue
+        seen.add(level)
+        if f"{level} Complete" in excluded:
+            continue
+        levels.append((level, items.unlock_item_name(world, level)))
+    return levels
 
 
-def has_enough_prisms(world: UncannyCatWorld) -> Rule[UncannyCatWorld] | None:
-    prisms_per_level = 5 if world.options.peak_checks else 4
-    levels_needed = ceil(world.options.prism_unlock_amount.value / prisms_per_level) - 5  # world 0 is free
-    if levels_needed <= 0:
-        return None
-    unlocks = levels_per_unlock_item(world)
-    total = 0
-    for count, levels in enumerate(sorted(unlocks.values()), start=1):
-        total += levels
-        if total >= levels_needed:
-            return HasFromList(*unlocks, count=count)
-    raise OptionError(f"Uncanny Cat Golf ({world.player_name}): prism requirement exceeds available levels")
+def max_obtainable_prisms(world: UncannyCatWorld) -> int:
+    """Every level in the seed unlocked and ranked as high as logic expects. The cap for the goal amount."""
+    best_rank_prisms = prism_tiers(world, bool(world.options.peak_checks))[0][0]
+    return len(seed_levels(world)) * best_rank_prisms
+
+
+@dataclass
+class HasEnoughPrisms(Rule["UncannyCatWorld"], game="Uncanny Cat Golf"):
+    """
+    Enough prisms banked to unlock the goal level.
+
+    Each unlocked level pays out for the highest rank you can actually reach in it: the first tier whose
+    gimmicks you hold, or `COMPLETE_PRISMS` if you can only finish the level. `include_peak` adds the
+    peak tier on top, which is what logic assumes when peak checks are on.
+    """
+
+    include_peak: bool
+
+    class Resolved(Rule.Resolved):
+        required: int
+        free_prisms: int
+        levels: tuple[tuple[str | None, tuple[PrismTier, ...]], ...]
+
+        @override
+        def _evaluate(self, state: CollectionState) -> bool:
+            total = self.free_prisms
+            for unlock, tiers in self.levels:
+                if unlock is not None and not state.has(unlock, self.player):
+                    continue
+                total += self.level_prisms(state, tiers)
+                if total >= self.required:
+                    return True
+            return total >= self.required
+
+        def level_prisms(self, state: CollectionState, tiers: tuple[PrismTier, ...]) -> int:
+            """The best rank you can reach in one unlocked level."""
+            for prisms, gimmicks in tiers:
+                if all(
+                    any(state.has(gimmick, self.player) for gimmick in alternatives)
+                    for alternatives in gimmicks
+                ):
+                    return prisms
+            return COMPLETE_PRISMS
+
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            dependencies: dict[str, set[int]] = {}
+            for unlock, tiers in self.levels:
+                names = [unlock] if unlock is not None else []
+                names += [g for _prisms, gimmicks in tiers for alternatives in gimmicks for g in alternatives]
+                for name in names:
+                    dependencies.setdefault(name, set()).add(id(self))
+            return dependencies
+
+        @override
+        def explain_str(self, state: CollectionState | None = None) -> str:
+            ranks = ", ".join(str(prisms) for prisms, _gimmicks in self.levels[0][1]) if self.levels else ""
+            return f"{self.required} prisms ({ranks} per ranked level, {COMPLETE_PRISMS} if you can only complete it)"
+
+    @override
+    def _instantiate(self, world: "UncannyCatWorld") -> "HasEnoughPrisms.Resolved":
+        tiers = prism_tiers(world, self.include_peak)
+        free_prisms = 0
+        levels: list[tuple[str | None, tuple[PrismTier, ...]]] = []
+        for level, unlock in seed_levels(world):
+            level_tiers = tuple(
+                (prisms, gimmick_alternatives(LOCATION_DATA[f"{level}{suffix}"][1]) if world.options.gimmick_lock else ())
+                for prisms, suffix in tiers
+            )
+            if unlock is None and not level_tiers[0][1]:
+                # Playable from the start and nothing gates its best rank, so its payout is a constant.
+                free_prisms += level_tiers[0][0]
+                continue
+            levels.append((unlock, level_tiers))
+        return HasEnoughPrisms.Resolved(
+            required=world.options.prism_unlock_amount.value,
+            free_prisms=free_prisms,
+            levels=tuple(levels),
+            player=world.player,
+            caching_enabled=getattr(world, "rule_caching_enabled", False),
+        )
+
+
+def has_enough_prisms(world: UncannyCatWorld) -> Rule[UncannyCatWorld]:
+    peak_checks_on = bool(world.options.peak_checks)
+    in_logic = HasEnoughPrisms(include_peak=peak_checks_on)
+    if peak_checks_on:
+        return in_logic
+
+    # You can go out of logic and get higher ranks and goal early, this accounts for that in UT
+    return in_logic | (
+        OutOfLogic(f"Peak levels for {PEAK_PRISMS} prisms each instead of {rank_check_prisms(world)}")
+        & HasEnoughPrisms(include_peak=True)
+    )
 
 
 def set_completion_condition(world: UncannyCatWorld) -> None:
@@ -146,9 +258,7 @@ def set_completion_condition(world: UncannyCatWorld) -> None:
         if gimmicks is not None:
             parts.append(gimmicks)
 
-    prisms = has_enough_prisms(world)
-    if prisms is not None:
-        parts.append(prisms)
+    parts.append(has_enough_prisms(world))
 
-    world.set_rule(world.get_location("Victory"), And(*parts) if parts else True_())
+    world.set_rule(world.get_location("Victory"), And(*parts))
     world.set_completion_rule(Has("Victory"))

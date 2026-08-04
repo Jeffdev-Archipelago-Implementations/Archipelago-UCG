@@ -29,17 +29,6 @@ class UncannyCatWorld(World):
     glitches_item_name: str = "out_of_logic"
         
     def generate_early(self) -> None:
-        re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
-        if re_gen_passthrough and self.game in re_gen_passthrough:
-            # Get the passed through slot data from the real generation
-            slot_data: dict[str, Any] = re_gen_passthrough[self.game]
-
-            slot_options: dict[str, Any] = slot_data.get("options", {})
-            for key, value in slot_options.items():
-                opt = getattr(self.options, key, None)
-                if opt is not None:
-                    setattr(self.options, key, opt.from_any(value))
-
         # A goal level in World 5 or World P forces that world's levels on
         goal = items.GOAL_LEVEL[self.options.goal_level.value]
         goal_world = items.world_prefix(goal)
@@ -48,15 +37,26 @@ class UncannyCatWorld(World):
         elif goal_world == "P":
             self.options.world_p_levels.value = 1
 
-        # Ensure prism count always works
-        prisms_per_level = 5 if self.options.peak_checks else 4
-        max_prisms = (5 + sum(rules.levels_per_unlock_item(self).values())) * prisms_per_level
-        self.options.prism_unlock_amount.value = min(self.options.prism_unlock_amount.value, max_prisms)
-
+        # Ensure prism count always works. The cap assumes every level unlocked with every gimmick in
+        # hand, so the goal is always reachable no matter how the rank gimmicks fall.
+        self.options.prism_unlock_amount.value = min(
+            self.options.prism_unlock_amount.value, rules.max_obtainable_prisms(self)
+        )
 
         # Chill Mode forces panic mode off
         if self.options.chill_mode:
             self.options.panic_mode.value = 0
+            
+        re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
+        if re_gen_passthrough and self.game in re_gen_passthrough:
+            # Get the passed through slot data from the real generation. fill_slot_data returns a flat
+            # option map, so the options are the top level keys - don't go looking for a nested dict.
+            slot_data: dict[str, Any] = re_gen_passthrough[self.game]
+
+            for key, value in slot_data.items():
+                opt = getattr(self.options, key, None)
+                if opt is not None:
+                    setattr(self.options, key, opt.from_any(value))
 
     def create_regions(self) -> None:
         regions.create_and_connect_regions(self)
@@ -87,6 +87,7 @@ class UncannyCatWorld(World):
             "world_p_levels": self.options.world_p_levels.value,
             "world_e_levels": self.options.world_e_levels.value,
             "peak_checks": self.options.peak_checks.value,
+            "rank_check_difficulty": self.options.rank_check_difficulty.value,
             "chill_mode": self.options.chill_mode.value,
             "panic_mode": self.options.panic_mode.value,
         }

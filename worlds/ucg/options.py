@@ -77,6 +77,22 @@ class PeakChecks(Toggle):
     """
     display_name = "Peak Checks"
 
+class RankCheckDifficulty(Choice):
+    """
+    Which in-game rank sends the per-level rank check.
+
+    OK: An "OK" (3 prism) rank or better sends the check.
+    Good: A "GOOD" (4 prism) rank or better is required.
+
+    Every level always has a rank check. This only sets how hard it is to send one.
+    This also determines how many levels are required to goal your game for logic.
+    """
+    display_name = "Rank Check Difficulty"
+
+    default = 1
+    option_ok = 0
+    option_good = 1
+
 class ChillMode(Toggle):
     """
     Enable the "Chill Mode" modifier that removes the Uncanny Cat entirely. This makes the game significantly easier.
@@ -105,5 +121,6 @@ class UncannyCatOptions(PerGameCommonOptions):
     world_p_levels: WorldPLevels
     world_e_levels: WorldELevels
     peak_checks: PeakChecks
+    rank_check_difficulty: RankCheckDifficulty
     chill_mode: ChillMode
     panic_mode: PanicMode
