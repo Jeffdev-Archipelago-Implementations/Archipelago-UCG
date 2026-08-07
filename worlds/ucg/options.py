@@ -73,7 +73,7 @@ class WorldELevels(Toggle):
 
 class PeakChecks(Toggle):
     """
-    Add a check for gaining a "PEAK" rank in a level. These can be extremely difficult.
+    Add a check for gaining a "PEAK" rank in a level. These can be really difficult.
     """
     display_name = "Peak Checks"
 

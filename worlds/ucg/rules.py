@@ -8,8 +8,8 @@ from NetUtils import JSONMessagePart
 from rule_builder.rules import CanReachRegion, Has, HasFromList, Rule, And, HasAll
 
 from . import items
-from .items import GOAL_LEVEL, ITEM_GROUPS
-from .locations import LOCATION_DATA, get_excluded_locations, level_item_name
+from .items import GOAL_LEVEL
+from .locations import LOCATION_DATA, get_excluded_locations, is_minigame_location, level_item_name
 from .options import RankCheckDifficulty
 
 
@@ -67,6 +67,10 @@ def gimmick_rule(requirements: list[str]) -> Rule[UncannyCatWorld] | None:
 def location_rule(world: UncannyCatWorld, location_name: str) -> Rule[UncannyCatWorld] | None:
     _loc_id, requirements = LOCATION_DATA[location_name]
     parts: list[Rule[UncannyCatWorld]] = []
+
+    if is_minigame_location(location_name):
+        # A minigame's own unlock always gates it. It isn't a gimmick, so gimmick_lock doesn't apply.
+        return HasAll(*requirements)
 
     unlock = items.unlock_item_name(world, level_item_name(location_name))
     if unlock is not None:
@@ -143,6 +147,8 @@ def seed_levels(world: UncannyCatWorld) -> list[tuple[str, str | None]]:
     levels: list[tuple[str, str | None]] = []
     seen: set[str] = set()
     for location_name in LOCATION_DATA:
+        if is_minigame_location(location_name):
+            continue  # minigames aren't levels and pay out no prisms
         level = level_item_name(location_name)
         if level in seen:
             continue

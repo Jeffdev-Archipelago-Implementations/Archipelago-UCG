@@ -37,8 +37,7 @@ class UncannyCatWorld(World):
         elif goal_world == "P":
             self.options.world_p_levels.value = 1
 
-        # Ensure prism count always works. The cap assumes every level unlocked with every gimmick in
-        # hand, so the goal is always reachable no matter how the rank gimmicks fall.
+        # Ensure prism count always works.
         self.options.prism_unlock_amount.value = min(
             self.options.prism_unlock_amount.value, rules.max_obtainable_prisms(self)
         )
@@ -49,8 +48,6 @@ class UncannyCatWorld(World):
             
         re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
         if re_gen_passthrough and self.game in re_gen_passthrough:
-            # Get the passed through slot data from the real generation. fill_slot_data returns a flat
-            # option map, so the options are the top level keys - don't go looking for a nested dict.
             slot_data: dict[str, Any] = re_gen_passthrough[self.game]
 
             for key, value in slot_data.items():

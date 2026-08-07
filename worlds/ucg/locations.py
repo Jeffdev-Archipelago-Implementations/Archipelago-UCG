@@ -141,9 +141,9 @@ LOCATION_DATA: dict[str, tuple[int, list[str]]] = {
     "2-17: Baby Vegas Complete": (BASE_ID + 216, ["Keys", "Jump Pads"]),
     "2-17: Baby Vegas Peak Rank": (BASE_ID + 1216, ["Keys", "Jump Pads", "Stop Markers"]),
     "2-17: Baby Vegas Good Rank": (BASE_ID + 3216, ["Keys", "Jump Pads", "Stop Markers"]),
-    "2-18: Good Rank Night, Glowstick City Complete": (BASE_ID + 217, ["Jump Pads"]),
-    "2-18: Good Rank Night, Glowstick City Peak Rank": (BASE_ID + 1217, ["Jump Pads"]),
-    "2-18: Good Rank Night, Glowstick City Good Rank": (BASE_ID + 3217, ["Jump Pads"]),
+    "2-18: Good Night, Glowstick City Complete": (BASE_ID + 217, ["Jump Pads"]),
+    "2-18: Good Night, Glowstick City Peak Rank": (BASE_ID + 1217, ["Jump Pads"]),
+    "2-18: Good Night, Glowstick City Good Rank": (BASE_ID + 3217, ["Jump Pads"]),
 
     "3-1: Welcome to CHUCKLE PARK! Complete": (BASE_ID + 300, []),
     "3-1: Welcome to CHUCKLE PARK! Peak Rank": (BASE_ID + 1300, []),
@@ -342,9 +342,9 @@ LOCATION_DATA: dict[str, tuple[int, list[str]]] = {
     "P-5: Starstorm! Complete": (BASE_ID + 604, ["Breakable Tiles"]),
     "P-5: Starstorm! Peak Rank": (BASE_ID + 1604, ["Breakable Tiles", "Stop Markers"]),
     "P-5: Starstorm! Good Rank": (BASE_ID + 3604, ["Breakable Tiles", "Stop Markers"]),
-    "P-6: Oh My Good Rankness, This Beat Is So Hard Complete": (BASE_ID + 605, ["Metronome"]),
-    "P-6: Oh My Good Rankness, This Beat Is So Hard Peak Rank": (BASE_ID + 1605, ["Metronome"]),
-    "P-6: Oh My Good Rankness, This Beat Is So Hard Good Rank": (BASE_ID + 3605, ["Metronome"]),
+    "P-6: Oh My Goodness, This Beat Is So Hard Complete": (BASE_ID + 605, ["Metronome"]),
+    "P-6: Oh My Goodness, This Beat Is So Hard Peak Rank": (BASE_ID + 1605, ["Metronome"]),
+    "P-6: Oh My Goodness, This Beat Is So Hard Good Rank": (BASE_ID + 3605, ["Metronome"]),
     "P-7: Ourple Complete": (BASE_ID + 606, ["Metronome", "Switch Tiles"]),
     "P-7: Ourple Peak Rank": (BASE_ID + 1606, ["Metronome", "Switch Tiles"]),
     "P-7: Ourple Good Rank": (BASE_ID + 3606, ["Metronome", "Switch Tiles"]),
@@ -427,6 +427,38 @@ LOCATION_DATA: dict[str, tuple[int, list[str]]] = {
     "E-9: Infinity Plaza Complete": (BASE_ID + 709, ["Keys", "Breakable Tiles"]),
     "E-9: Infinity Plaza Peak Rank": (BASE_ID + 1709, ["Keys", "Breakable Tiles"]),
     "E-9: Infinity Plaza Good Rank": (BASE_ID + 3709, ["Keys", "Breakable Tiles"]),
+    
+    # MINIGAME LOCATIONS
+    "Bort Bash: Round 1": (BASE_ID + 5000, ["Bort Bash"]),
+    "Bort Bash: Round 2": (BASE_ID + 5001, ["Bort Bash"]),
+    "Bort Bash: Round 3": (BASE_ID + 5002, ["Bort Bash"]),
+    "Bort Bash: Round 4": (BASE_ID + 5003, ["Bort Bash"]),
+    "Bort Bash: Round 5": (BASE_ID + 5004, ["Bort Bash"]),
+    "Bort Bash: Round 6": (BASE_ID + 5005, ["Bort Bash"]),
+    "Bort Bash: Round 7": (BASE_ID + 5006, ["Bort Bash"]),
+    "Bort Bash: Round 8": (BASE_ID + 5007, ["Bort Bash"]),
+    "Bort Bash: Round 9": (BASE_ID + 5008, ["Bort Bash"]),
+    "Bort Bash: Round 10": (BASE_ID + 5009, ["Bort Bash"]),
+    "Meowls: 10km": (BASE_ID + 6000, ["Meowls"]),
+    "Meowls: 20km": (BASE_ID + 6001, ["Meowls"]),
+    "Meowls: 30km": (BASE_ID + 6002, ["Meowls"]),
+    "Meowls: 40km": (BASE_ID + 6003, ["Meowls"]),
+    "Meowls: 50km": (BASE_ID + 6004, ["Meowls"]),
+    "Meowls: 60km": (BASE_ID + 6005, ["Meowls"]),
+    "Meowls: 70km": (BASE_ID + 6006, ["Meowls"]),
+    "Meowls: 80km": (BASE_ID + 6007, ["Meowls"]),
+    "Meowls: 90km": (BASE_ID + 6008, ["Meowls"]),
+    "Meowls: 100km": (BASE_ID + 6009, ["Meowls"]),
+    "UNCANNY_DASH: 25 Score": (BASE_ID + 7000, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 50 Score": (BASE_ID + 7001, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 75 Score": (BASE_ID + 7002, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 100 Score": (BASE_ID + 7003, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 125 Score": (BASE_ID + 7004, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 150 Score": (BASE_ID + 7005, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 175 Score": (BASE_ID + 7006, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 200 Score": (BASE_ID + 7007, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 225 Score": (BASE_ID + 7008, ["UNCANNY_DASH"]),
+    "UNCANNY_DASH: 250 Score": (BASE_ID + 7009, ["UNCANNY_DASH"]),
 }
 
 # The world class needs a plain name -> id mapping, without the logic requirements attached.
@@ -437,9 +469,16 @@ LEVEL_LOCATION_SUFFIXES = (
     " Red Smiley", " Green Smiley", " Blue Smiley", " Yellow Smiley", " Orange Smiley",
 )
 
+MINIGAME_LOCATION_PREFIXES = tuple(f"{name}: " for name in sorted(items.MINIGAME_ITEM_NAMES))
+
 
 class UncannyCatLocation(Location):
     game = "Uncanny Cat Golf"
+
+
+def is_minigame_location(location_name: str) -> bool:
+    """Minigame checks belong to a minigame rather than a level, so level and prism logic should skip them."""
+    return location_name.startswith(MINIGAME_LOCATION_PREFIXES)
 
 
 def level_item_name(location_name: str) -> str:
@@ -462,6 +501,11 @@ def get_excluded_locations(world: UncannyCatWorld) -> set[str]:
 
     excluded: set[str] = set()
     for location_name in LOCATION_NAME_TO_ID:
+        if is_minigame_location(location_name):
+            if not world.options.minigames:
+                excluded.add(location_name)
+            continue
+
         level = level_item_name(location_name)
         if items.world_prefix(level) not in included_worlds:
             excluded.add(location_name)
@@ -469,8 +513,6 @@ def get_excluded_locations(world: UncannyCatWorld) -> set[str]:
             excluded.add(location_name)
         elif not world.options.peak_checks and location_name.endswith(" Peak Rank"):
             excluded.add(location_name)
-        # " Good Rank" rank checks are always included; rank_check_difficulty only changes
-        # which in-game rank the game accepts for them, not whether they exist.
     return excluded
 
 

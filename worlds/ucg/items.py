@@ -171,11 +171,41 @@ ITEM_NAME_TO_ID = {
     "Missile Strike Modifier Trap": BASE_ID + 3006,
     "Sticky Modifier Trap": BASE_ID + 3007,
 
-    # Filler
-    "Golf!": BASE_ID + 4000
+    # Misc. Filler
+    "Uncanny Cat Spray": BASE_ID + 4000, # Doesn't do anything, just a silly name
+    "Cat Artist": BASE_ID + 4001,
+    "Mystery Phone": BASE_ID + 4002,
+    "Meowls": BASE_ID + 4003, # Minigame, progression with some settings
+    "UNCANNY_DASH": BASE_ID + 4004, # Minigame, progression with some settings
+    "Bort Bash": BASE_ID + 4005, # Minigame, progression with some settings
+    "Sound Test": BASE_ID + 4006,
+
+    # Filler Costumes
+    "Copy Cat Costume": BASE_ID + 5000,
+    "Ms. Canny Costume": BASE_ID + 5001,
+    "Retro Canny Costume": BASE_ID + 5002,
+    "Shiver Dog Costume": BASE_ID + 5003,
+    "TD Veteran Costume": BASE_ID + 5004,
+    "Cannydigo Costume": BASE_ID + 5005,
+    "The Rainbow Costume": BASE_ID + 5006,
+    "Wires Costume": BASE_ID + 5007,
+    "Bingus Costume": BASE_ID + 5008,
+    "Minnie Costume": BASE_ID + 5009,
+    "Robert Costume": BASE_ID + 5010,
+    "Rudy Costume": BASE_ID + 5011,
+    "Ploobie Costume": BASE_ID + 5012,
+    "Pig Costume": BASE_ID + 5013,
+    "Chen Costume": BASE_ID + 5014,
+    "Swag Costume": BASE_ID + 5015,
+    "Arleling Costume": BASE_ID + 5016,
+    "True... Costume": BASE_ID + 5017,
+    "King Canny Costume": BASE_ID + 5018,
+    "Catfish Costume": BASE_ID + 5019,
+    "Hard Hat Costume": BASE_ID + 5020,
+    "Nothing Costume": BASE_ID + 5021,
 }
 
-# All level and world unlocks are progression deprioritzed skip balancing, and thus are excluded from this list for simplicity.
+# All level and world unlocks are progression deprioritzed skip balancing
 DEFAULT_ITEM_CLASSIFICATIONS = {
     "Breakable Tiles": ItemClassification.progression,
     "Keys": ItemClassification.progression,
@@ -199,29 +229,69 @@ DEFAULT_ITEM_CLASSIFICATIONS = {
     "Missile Strike Modifier Trap": ItemClassification.trap,
     "Sticky Modifier Trap": ItemClassification.trap,
 
-    "Golf!": ItemClassification.filler
+    "Uncanny Cat Spray": ItemClassification.filler,
+    "Cat Artist": ItemClassification.filler,
+    "Mystery Phone": ItemClassification.filler,
+    "Meowls": ItemClassification.progression,
+    "UNCANNY_DASH": ItemClassification.progression,
+    "Bort Bash": ItemClassification.progression,
+    "Sound Test": ItemClassification.filler,
+    
+    "Copy Cat Costume": ItemClassification.filler,
+    "Ms. Canny Costume": ItemClassification.filler,
+    "Retro Canny Costume": ItemClassification.filler,
+    "Shiver Dog Costume": ItemClassification.filler,
+    "TD Veteran Costume": ItemClassification.filler,
+    "Cannydigo Costume": ItemClassification.filler,
+    "The Rainbow Costume": ItemClassification.filler,
+    "Wires Costume": ItemClassification.filler,
+    "Bingus Costume": ItemClassification.filler,
+    "Minnie Costume": ItemClassification.filler,
+    "Robert Costume": ItemClassification.filler,
+    "Rudy Costume": ItemClassification.filler,
+    "Ploobie Costume": ItemClassification.filler,
+    "Pig Costume": ItemClassification.filler,
+    "Chen Costume": ItemClassification.filler,
+    "Swag Costume": ItemClassification.filler,
+    "Arleling Costume": ItemClassification.filler,
+    "True... Costume": ItemClassification.filler,
+    "King Canny Costume": ItemClassification.filler,
+    "Catfish Costume": ItemClassification.filler,
+    "Hard Hat Costume": ItemClassification.filler,
+    "Nothing Costume": ItemClassification.filler,
 }
 
-LEVEL_ITEM_NAMES: set[str] = {
-    name for name, item_id in ITEM_NAME_TO_ID.items() if item_id < BASE_ID + 1000
+def _items_in_id_range(id_range: int) -> set[str]:
+    """Item names within ranges of 1000"""
+    return {
+        name for name, item_id in ITEM_NAME_TO_ID.items()
+        if id_range * 1000 <= item_id - BASE_ID < (id_range + 1) * 1000
+    }
+
+
+LEVEL_ITEM_NAMES: set[str] = _items_in_id_range(0)
+WORLD_ITEM_NAMES: set[str] = _items_in_id_range(1)
+GIMMICK_ITEM_NAMES: set[str] = _items_in_id_range(2)
+TRAP_ITEM_NAMES: set[str] = _items_in_id_range(3)
+COSTUME_ITEM_NAMES: set[str] = _items_in_id_range(5)
+MINIGAME_ITEM_NAMES: set[str] = {"Meowls", "UNCANNY_DASH", "Bort Bash"}
+
+FILLER_ITEM_NAMES: set[str] = {
+    name for name, classification in DEFAULT_ITEM_CLASSIFICATIONS.items()
+    if classification == ItemClassification.filler
 }
 
 ITEM_GROUPS: dict[str, set[str]] = {
     "Levels": LEVEL_ITEM_NAMES,
-    "Worlds": { 
-        "World 1 (Golf Central) Unlock",
-        "World 2 (Glowstick City) Unlock",
-        "World 3 (Chuckle Park) Unlock",
-        "World 4 (Final Frontier) Unlock",
-        "World 5 (Elysian Fields) Unlock",
-        "World P (Cosmic Championship) Unlock",
-        "World E (Endless Levels) Unlock",
-    },
-    "Gimmicks": { "Breakable Tiles", "Keys", "Stop Markers", "Go Markers", "Jump Pads", "Switch Tiles", "Dog", "Portals", "Nuke", "Golf Balls", "Landmines", "Metronome"},
-    "Traps": { "Burst Modifier Trap", "Telekinesis Modifier Trap", "Little Buddy Modifier Trap", "Parry Modifier Trap", "Jumpy Modifier Trap", "Dizzy Modifier Trap", "Missile Strike Modifier Trap", "Sticky Modifier Trap"}
+    "Worlds": WORLD_ITEM_NAMES,
+    "Gimmicks": GIMMICK_ITEM_NAMES,
+    "Traps": TRAP_ITEM_NAMES,
+    "Minigames": MINIGAME_ITEM_NAMES,
+    "Costumes": COSTUME_ITEM_NAMES,
+    "Filler": FILLER_ITEM_NAMES,
 }
 
-FILLER_ITEM_NAME = "Golf!"
+FILLER_ITEM_NAME = "Uncanny Cat Spray"
 TRAP_CHANCE = 25 # Percentage of traps replacing filler
 
 WORLD_UNLOCK_BY_PREFIX: dict[str, str] = {
@@ -292,15 +362,17 @@ def get_gimmick_item_names(world: UncannyCatWorld) -> list[str]:
         return []
     included = get_included_world_prefixes(world)
     return [
-        name for name in ITEM_GROUPS["Gimmicks"]
+        name for name in GIMMICK_ITEM_NAMES
         if GIMMICK_WORLD_PREFIX.get(name, "0") in included
     ]
 
 
-def get_item_classification(name: str) -> ItemClassification:
+def get_item_classification(world: UncannyCatWorld, name: str) -> ItemClassification:
+    if name in MINIGAME_ITEM_NAMES and not world.options.minigames:
+        return ItemClassification.filler
     if name in DEFAULT_ITEM_CLASSIFICATIONS:
         return DEFAULT_ITEM_CLASSIFICATIONS[name]
-    if name in LEVEL_ITEM_NAMES or name in ITEM_GROUPS["Worlds"]:
+    if name in LEVEL_ITEM_NAMES or name in WORLD_ITEM_NAMES:
         return ItemClassification.progression_deprioritized_skip_balancing
     raise KeyError(f"No classification defined for Uncanny Cat Golf item {name!r}")
 
@@ -311,18 +383,18 @@ class UncannyCatItem(Item):
 
 def get_random_filler_item_name(world: UncannyCatWorld) -> str:
     if world.random.randint(0, 99) < TRAP_CHANCE:
-        return world.random.choice(sorted(ITEM_GROUPS["Traps"]))
+        return world.random.choice(sorted(TRAP_ITEM_NAMES))
     return FILLER_ITEM_NAME
 
 
 def create_item_with_correct_classification(world: UncannyCatWorld, name: str) -> UncannyCatItem:
-    return UncannyCatItem(name, get_item_classification(name), ITEM_NAME_TO_ID[name], world.player)
+    return UncannyCatItem(name, get_item_classification(world, name), ITEM_NAME_TO_ID[name], world.player)
 
 
 def create_all_items(world: UncannyCatWorld) -> None:
     itempool: list[Item] = [
         world.create_item(name)
-        for name in get_unlock_item_names(world) + get_gimmick_item_names(world)
+        for name in get_unlock_item_names(world) + get_gimmick_item_names(world) + sorted(MINIGAME_ITEM_NAMES)
     ]
 
     # Fill remaining location slots with filler/traps
@@ -333,6 +405,15 @@ def create_all_items(world: UncannyCatWorld) -> None:
             f"Uncanny Cat Golf ({world.player_name}) created {len(itempool)} items for only "
             f"{number_of_unfilled_locations} locations. Enable more worlds or peak checks."
         )
-    itempool += [world.create_filler() for _ in range(needed_filler)]
+
+    # One of every filler item first, so each one turns up at least once. Shuffled so that a seed too
+    # small to fit them all drops a random few rather than always the same end of the alphabet.
+    one_of_each = sorted(FILLER_ITEM_NAMES)
+    world.random.shuffle(one_of_each)
+    one_of_each = one_of_each[:needed_filler]
+    itempool += [world.create_item(name) for name in one_of_each]
+
+    # Then pad the rest out with Uncanny Cat Spray or traps.
+    itempool += [world.create_filler() for _ in range(needed_filler - len(one_of_each))]
 
     world.multiworld.itempool += itempool
