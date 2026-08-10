@@ -88,6 +88,8 @@ class UncannyCatWorld(World):
             "temp_modifiers": self.options.temp_modifiers.value,
             "chill_mode": self.options.chill_mode.value,
             "panic_mode": self.options.panic_mode.value,
+            "death_link": self.options.death_link.value,
+            "death_link_amnesty": self.options.death_link_amnesty.value,
         }
 
     @staticmethod

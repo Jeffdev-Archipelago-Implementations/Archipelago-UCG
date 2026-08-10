@@ -120,6 +120,15 @@ class PanicMode(Toggle):
     """
     display_name = "Panic Mode"
 
+class DeathLinkAmnesty(Range):
+    """
+    Amount of deaths before sending a Death Link.
+    """
+    display_name = "Death Link Amnesty"
+    range_start = 1
+    range_end = 10
+    default = 5
+
 @dataclass
 class UncannyCatOptions(PerGameCommonOptions):
     goal_level: GoalLevel
@@ -135,3 +144,5 @@ class UncannyCatOptions(PerGameCommonOptions):
     temp_modifiers: TemporaryModifiers
     chill_mode: ChillMode
     panic_mode: PanicMode
+    death_link: DeathLink
+    death_link_amnesty: DeathLinkAmnesty
