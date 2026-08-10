@@ -106,6 +106,7 @@ class TemporaryModifiers(DefaultOnToggle):
 class ChillMode(Toggle):
     """
     Enable the "Chill Mode" modifier that removes the Uncanny Cat entirely. This makes the game significantly easier.
+    This can be disabled/enabled in the mod config.
     """
     display_name = "Chill Mode"
 
@@ -117,12 +118,14 @@ class PanicMode(Toggle):
     DO NOT ENABLE THIS IF YOU AREN'T PREPARED FOR WHAT IT ENTAILS.
 
     Automatically disabled if "Chill Mode" is enabled.
+    This can be disabled/enabled in the mod config.
     """
     display_name = "Panic Mode"
 
 class DeathLinkAmnesty(Range):
     """
     Amount of deaths before sending a Death Link.
+    This can be changed in the mod config.
     """
     display_name = "Death Link Amnesty"
     range_start = 1
