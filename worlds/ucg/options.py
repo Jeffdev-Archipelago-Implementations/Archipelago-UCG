@@ -92,6 +92,16 @@ class RankCheckDifficulty(Choice):
     default = 1
     option_ok = 0
     option_good = 1
+    
+class TemporaryModifiers(DefaultOnToggle):
+    """
+    Adds temporary modifier items based on the existing modifiers, some of which are traps and some are useful. These last until you complete a level.
+    If you find these too difficult, you can always go back to 0-1 to cycle through them, as that level will always be available.
+
+    When enabled, these make up all of the filler in your pool. When disabled, that filler is all Uncanny Cat Spray instead.
+    Either way you still get one of each of the costumes and other one-off filler items.
+    """
+    display_name = "Temporary Modifiers"
 
 class ChillMode(Toggle):
     """
@@ -122,5 +132,6 @@ class UncannyCatOptions(PerGameCommonOptions):
     world_e_levels: WorldELevels
     peak_checks: PeakChecks
     rank_check_difficulty: RankCheckDifficulty
+    temp_modifiers: TemporaryModifiers
     chill_mode: ChillMode
     panic_mode: PanicMode

@@ -162,17 +162,17 @@ ITEM_NAME_TO_ID = {
     "Metronome": BASE_ID + 2011,
 
     # Modifiers
-    "Burst Modifier Trap": BASE_ID + 3000,
-    "Telekinesis Modifier Trap": BASE_ID + 3001,
-    "Little Buddy Modifier Trap": BASE_ID + 3002,
-    "Parry Modifier Trap": BASE_ID + 3003, # Not a trap really, but just count it as one, make it trap + useful
-    "Jumpy Modifier Trap": BASE_ID + 3004,
-    "Dizzy Modifier Trap": BASE_ID + 3005,
-    "Missile Strike Modifier Trap": BASE_ID + 3006,
-    "Sticky Modifier Trap": BASE_ID + 3007,
+    "Burst Temporary Modifier": BASE_ID + 3000, # Useful, allows you to hit the cat mid shot
+    "Telekinesis Temporary Modifier": BASE_ID + 3001, # Extremely Useful, changes how the game is played to basically remove strokes, can definitely do some out of logic stuff
+    "Little Buddy Temporary Modifier": BASE_ID + 3002, # Trap, adds a little guy to get die from
+    "Parry Temporary Modifier": BASE_ID + 3003, # Useful, allows you to parry the Uncanny Cat
+    "Jumpy Temporary Modifier": BASE_ID + 3004, # Useful and a Trap? Makes your cat bounce every now and then. Mostly a trap cause you can die from it, but can be useful for skipping maybe? Trap + Useful flag?
+    "Dizzy Temporary Modifier": BASE_ID + 3005, # Trap, makes you super dizzy and messes with your movement
+    "Missile Strike Temporary Modifier": BASE_ID + 3006, # Trap, adds a missile strike constantly coming after you
+    "Sticky Temporary Modifier": BASE_ID + 3007, # Trap, makes you stick to walls. Generally unhelpful.
 
     # Misc. Filler
-    "Uncanny Cat Spray": BASE_ID + 4000, # Doesn't do anything, just a silly name
+    "Uncanny Cat Spray": BASE_ID + 4000, # Doesn't do anything, just a silly name. Fills every spare slot if temp modifiers are off.
     "Cat Artist": BASE_ID + 4001,
     "Mystery Phone": BASE_ID + 4002,
     "Meowls": BASE_ID + 4003, # Minigame, progression with some settings
@@ -220,14 +220,14 @@ DEFAULT_ITEM_CLASSIFICATIONS = {
     "Landmines": ItemClassification.progression,
     "Metronome": ItemClassification.progression,
 
-    "Burst Modifier Trap": ItemClassification.trap,
-    "Telekinesis Modifier Trap": ItemClassification.trap,
-    "Little Buddy Modifier Trap": ItemClassification.trap,
-    "Parry Modifier Trap": ItemClassification.trap,
-    "Jumpy Modifier Trap": ItemClassification.trap,
-    "Dizzy Modifier Trap": ItemClassification.trap,
-    "Missile Strike Modifier Trap": ItemClassification.trap,
-    "Sticky Modifier Trap": ItemClassification.trap,
+    "Burst Temporary Modifier": ItemClassification.useful,
+    "Telekinesis Temporary Modifier": ItemClassification.useful,
+    "Little Buddy Temporary Modifier": ItemClassification.trap,
+    "Parry Temporary Modifier": ItemClassification.useful,
+    "Jumpy Temporary Modifier": ItemClassification.trap,
+    "Dizzy Temporary Modifier": ItemClassification.trap,
+    "Missile Strike Temporary Modifier": ItemClassification.trap,
+    "Sticky Temporary Modifier": ItemClassification.trap,
 
     "Uncanny Cat Spray": ItemClassification.filler,
     "Cat Artist": ItemClassification.filler,
@@ -272,7 +272,7 @@ def _items_in_id_range(id_range: int) -> list[str]:
 LEVEL_ITEM_NAMES: list[str] = _items_in_id_range(0)
 WORLD_ITEM_NAMES: list[str] = _items_in_id_range(1)
 GIMMICK_ITEM_NAMES: list[str] = _items_in_id_range(2)
-TRAP_ITEM_NAMES: list[str] = _items_in_id_range(3)
+MODIFIER_ITEM_NAMES: list[str] = _items_in_id_range(3)
 COSTUME_ITEM_NAMES: list[str] = _items_in_id_range(5)
 MINIGAME_ITEM_NAMES: list[str] = {"Meowls", "UNCANNY_DASH", "Bort Bash"}
 
@@ -285,14 +285,13 @@ ITEM_GROUPS: dict[str, list[str]] = {
     "Levels": LEVEL_ITEM_NAMES,
     "Worlds": WORLD_ITEM_NAMES,
     "Gimmicks": GIMMICK_ITEM_NAMES,
-    "Traps": TRAP_ITEM_NAMES,
+    "Modifiers": MODIFIER_ITEM_NAMES,
     "Minigames": MINIGAME_ITEM_NAMES,
     "Costumes": COSTUME_ITEM_NAMES,
     "Filler": FILLER_ITEM_NAMES,
 }
 
 FILLER_ITEM_NAME = "Uncanny Cat Spray"
-TRAP_CHANCE = 25 # Percentage of traps replacing filler
 
 WORLD_UNLOCK_BY_PREFIX: dict[str, str] = {
     "1": "World 1 (Golf Central) Unlock",
@@ -382,8 +381,14 @@ class UncannyCatItem(Item):
 
 
 def get_random_filler_item_name(world: UncannyCatWorld) -> str:
-    if world.random.randint(0, 99) < TRAP_CHANCE:
-        return world.random.choice(sorted(TRAP_ITEM_NAMES))
+    """The multiworld's fallback filler."""
+    return FILLER_ITEM_NAME
+
+
+def get_pool_filler_item_name(world: UncannyCatWorld) -> str:
+    """With temporary modifiers on, all padding filler is modifiers. Otherwise it's all Uncanny Cat Spray."""
+    if world.options.temp_modifiers:
+        return world.random.choice(sorted(MODIFIER_ITEM_NAMES))
     return FILLER_ITEM_NAME
 
 
@@ -397,22 +402,24 @@ def create_all_items(world: UncannyCatWorld) -> None:
         for name in get_unlock_item_names(world) + get_gimmick_item_names(world) + sorted(MINIGAME_ITEM_NAMES)
     ]
 
-    # Fill remaining location slots with filler/traps
-    number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
-    needed_filler = number_of_unfilled_locations - len(itempool)
-    if needed_filler < 0:
+    # Every slot the required items don't claim is room to add fillers.
+    location_count = len(world.multiworld.get_unfilled_locations(world.player))
+    filler_to_add = location_count - len(itempool)
+    if filler_to_add < 0:
         raise OptionError(
             f"Uncanny Cat Golf ({world.player_name}) created {len(itempool)} items for only "
-            f"{number_of_unfilled_locations} locations. Enable more worlds or peak checks."
+            f"{location_count} locations. Enable more worlds or peak checks."
         )
-    
-    # This just adds one of each of the fillers so they're always in
-    one_of_each = sorted(FILLER_ITEM_NAMES)
-    world.random.shuffle(one_of_each)
-    one_of_each = one_of_each[:needed_filler]
-    itempool += [world.create_item(name) for name in one_of_each]
 
-    # Pad the rest out with basic nonsense or traps
-    itempool += [world.create_filler() for _ in range(needed_filler - len(one_of_each))]
+    guaranteed = sorted(FILLER_ITEM_NAMES)
+    world.random.shuffle(guaranteed)
+    del guaranteed[filler_to_add:]
+    itempool += [world.create_item(name) for name in guaranteed]
+
+    # Whatever room is left becomes temporary modifiers, or Uncanny Cat Spray when temp mods are off.
+    itempool += [
+        world.create_item(get_pool_filler_item_name(world))
+        for _ in range(filler_to_add - len(guaranteed))
+    ]
 
     world.multiworld.itempool += itempool

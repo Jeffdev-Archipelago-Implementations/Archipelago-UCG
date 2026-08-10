@@ -85,6 +85,7 @@ class UncannyCatWorld(World):
             "world_e_levels": self.options.world_e_levels.value,
             "peak_checks": self.options.peak_checks.value,
             "rank_check_difficulty": self.options.rank_check_difficulty.value,
+            "temp_modifiers": self.options.temp_modifiers.value,
             "chill_mode": self.options.chill_mode.value,
             "panic_mode": self.options.panic_mode.value,
         }
