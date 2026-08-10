@@ -261,7 +261,7 @@ DEFAULT_ITEM_CLASSIFICATIONS = {
     "Nothing Costume": ItemClassification.filler,
 }
 
-def _items_in_id_range(id_range: int) -> set[str]:
+def _items_in_id_range(id_range: int) -> list[str]:
     """Item names within ranges of 1000"""
     return {
         name for name, item_id in ITEM_NAME_TO_ID.items()
@@ -269,19 +269,19 @@ def _items_in_id_range(id_range: int) -> set[str]:
     }
 
 
-LEVEL_ITEM_NAMES: set[str] = _items_in_id_range(0)
-WORLD_ITEM_NAMES: set[str] = _items_in_id_range(1)
-GIMMICK_ITEM_NAMES: set[str] = _items_in_id_range(2)
-TRAP_ITEM_NAMES: set[str] = _items_in_id_range(3)
-COSTUME_ITEM_NAMES: set[str] = _items_in_id_range(5)
-MINIGAME_ITEM_NAMES: set[str] = {"Meowls", "UNCANNY_DASH", "Bort Bash"}
+LEVEL_ITEM_NAMES: list[str] = _items_in_id_range(0)
+WORLD_ITEM_NAMES: list[str] = _items_in_id_range(1)
+GIMMICK_ITEM_NAMES: list[str] = _items_in_id_range(2)
+TRAP_ITEM_NAMES: list[str] = _items_in_id_range(3)
+COSTUME_ITEM_NAMES: list[str] = _items_in_id_range(5)
+MINIGAME_ITEM_NAMES: list[str] = {"Meowls", "UNCANNY_DASH", "Bort Bash"}
 
-FILLER_ITEM_NAMES: set[str] = {
+FILLER_ITEM_NAMES: list[str] = {
     name for name, classification in DEFAULT_ITEM_CLASSIFICATIONS.items()
     if classification == ItemClassification.filler
 }
 
-ITEM_GROUPS: dict[str, set[str]] = {
+ITEM_GROUPS: dict[str, list[str]] = {
     "Levels": LEVEL_ITEM_NAMES,
     "Worlds": WORLD_ITEM_NAMES,
     "Gimmicks": GIMMICK_ITEM_NAMES,
@@ -317,15 +317,15 @@ def world_prefix(level_name: str) -> str:
     return level_name.split("-", 1)[0]
 
 
-def get_included_world_prefixes(world: UncannyCatWorld) -> set[str]:
+def get_included_world_prefixes(world: UncannyCatWorld) -> list[str]:
     """The worlds whose levels exist as checks under the player's options."""
-    prefixes = {"0", "1", "2", "3", "4"}
+    prefixes = ["0", "1", "2", "3", "4"]
     if world.options.world_5_levels:
-        prefixes.add("5")
+        prefixes.append("5")
     if world.options.world_p_levels:
-        prefixes.add("P")
+        prefixes.append("P")
     if world.options.world_e_levels:
-        prefixes.add("E")
+        prefixes.append("E")
     return prefixes
 
 
@@ -345,13 +345,13 @@ def get_unlock_item_names(world: UncannyCatWorld) -> list[str]:
 
     excluded = get_excluded_locations(world)
     names: list[str] = []
-    seen: set[str] = set()
+    seen: list[str] = []
     for location_name in LOCATION_DATA:
         if location_name in excluded:
             continue
         name = unlock_item_name(world, level_item_name(location_name))
         if name is not None and name not in seen:
-            seen.add(name)
+            seen.append(name)
             names.append(name)
     return names
 
@@ -405,15 +405,14 @@ def create_all_items(world: UncannyCatWorld) -> None:
             f"Uncanny Cat Golf ({world.player_name}) created {len(itempool)} items for only "
             f"{number_of_unfilled_locations} locations. Enable more worlds or peak checks."
         )
-
-    # One of every filler item first, so each one turns up at least once. Shuffled so that a seed too
-    # small to fit them all drops a random few rather than always the same end of the alphabet.
+    
+    # This just adds one of each of the fillers so they're always in
     one_of_each = sorted(FILLER_ITEM_NAMES)
     world.random.shuffle(one_of_each)
     one_of_each = one_of_each[:needed_filler]
     itempool += [world.create_item(name) for name in one_of_each]
 
-    # Then pad the rest out with Uncanny Cat Spray or traps.
+    # Pad the rest out with basic nonsense or traps
     itempool += [world.create_filler() for _ in range(needed_filler - len(one_of_each))]
 
     world.multiworld.itempool += itempool
