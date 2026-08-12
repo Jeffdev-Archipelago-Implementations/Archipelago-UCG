@@ -10,6 +10,7 @@ Uncanny Cat Golf is a silly golf game about shooting a cat into a golf hole, whi
 - All major level gimmicks (breakable tiles, keys, switch tiles, golf balls, etc.) are shuffled into the multiworld and do not work without being sent them.
 - All minigames (Bort Bash, UNCANNY_DASH, Meowls) access is shuffled into the multiworld, and have checks attached to them (if enabled)
 - All costumes are filler checks, as well as temporary modifiers that last one level completion (if enabled)
+- You also begin the game with the "Peak Hunter" mode, to assist with replaying a level to send checks.
 
 ## What are checks in this game?
 
