@@ -113,8 +113,8 @@ COMPLETE_PRISMS = 2
 """What a level is worth when you can finish it but can't rank up, because a gimmick it needs is missing."""
 
 
-GimmickRequirement = tuple[frozenset[str], ...]
-"""One frozenset per requirement. Any member of a set satisfies that requirement, all sets must be met."""
+GimmickRequirement = tuple[list[str], ...]
+"""Gimmick requirements needed to beat specific levels."""
 
 PrismTier = tuple[int, GimmickRequirement]
 """What a rank pays out, and the gimmicks needed to reach it."""
@@ -137,22 +137,22 @@ def prism_tiers(world: UncannyCatWorld, include_peak: bool) -> list[tuple[int, s
 
 
 def gimmick_alternatives(requirements: list[str]) -> GimmickRequirement:
-    """["Keys", "Portals|Jump Pads"] -> one frozenset per requirement, any member of which satisfies it."""
-    return tuple(frozenset(requirement.split("|")) for requirement in requirements)
+    """["Keys", "Portals|Jump Pads"] -> one list per requirement"""
+    return tuple(list(requirement.split("|")) for requirement in requirements)
 
 
 def seed_levels(world: UncannyCatWorld) -> list[tuple[str, str | None]]:
     """(level, unlock item) for every level in the seed. World 0 has no unlock item, so it is always playable."""
     excluded = get_excluded_locations(world)
     levels: list[tuple[str, str | None]] = []
-    seen: set[str] = set()
+    seen: list[str] = []
     for location_name in LOCATION_DATA:
         if is_minigame_location(location_name):
-            continue  # minigames aren't levels and pay out no prisms
+            continue  # minigames aren't levels, no prisms attached
         level = level_item_name(location_name)
         if level in seen:
             continue
-        seen.add(level)
+        seen.append(level)
         if f"{level} Complete" in excluded:
             continue
         levels.append((level, items.unlock_item_name(world, level)))
@@ -204,13 +204,13 @@ class HasEnoughPrisms(Rule["UncannyCatWorld"], game="Uncanny Cat Golf"):
             return COMPLETE_PRISMS
 
         @override
-        def item_dependencies(self) -> dict[str, set[int]]:
-            dependencies: dict[str, set[int]] = {}
+        def item_dependencies(self) -> dict[str, list[int]]:
+            dependencies: dict[str, list[int]] = {}
             for unlock, tiers in self.levels:
                 names = [unlock] if unlock is not None else []
                 names += [g for _prisms, gimmicks in tiers for alternatives in gimmicks for g in alternatives]
                 for name in names:
-                    dependencies.setdefault(name, set()).add(id(self))
+                    dependencies.setdefault(name, []).add(id(self))
             return dependencies
 
         @override
@@ -248,7 +248,7 @@ def has_enough_prisms(world: UncannyCatWorld) -> Rule[UncannyCatWorld]:
     if peak_checks_on:
         return in_logic
 
-    # You can go out of logic and get higher ranks and goal early, this accounts for that in UT
+    # You can go out of logic and get higher ranks and goal early, this tries to account for that in UT
     return in_logic | (
         OutOfLogic(f"Peak levels for {PEAK_PRISMS} prisms each instead of {rank_check_prisms(world)}")
         & HasEnoughPrisms(include_peak=True)
