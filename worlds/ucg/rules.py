@@ -113,7 +113,7 @@ COMPLETE_PRISMS = 2
 """What a level is worth when you can finish it but can't rank up, because a gimmick it needs is missing."""
 
 
-GimmickRequirement = tuple[list[str], ...]
+GimmickRequirement = tuple[tuple[str, ...], ...]
 """Gimmick requirements needed to beat specific levels."""
 
 PrismTier = tuple[int, GimmickRequirement]
@@ -137,8 +137,8 @@ def prism_tiers(world: UncannyCatWorld, include_peak: bool) -> list[tuple[int, s
 
 
 def gimmick_alternatives(requirements: list[str]) -> GimmickRequirement:
-    """["Keys", "Portals|Jump Pads"] -> one list per requirement"""
-    return tuple(list(requirement.split("|")) for requirement in requirements)
+    """["Keys", "Portals|Jump Pads"] -> one tuple of alternatives per requirement"""
+    return tuple(tuple(requirement.split("|")) for requirement in requirements)
 
 
 def seed_levels(world: UncannyCatWorld) -> list[tuple[str, str | None]]:
@@ -204,13 +204,13 @@ class HasEnoughPrisms(Rule["UncannyCatWorld"], game="Uncanny Cat Golf"):
             return COMPLETE_PRISMS
 
         @override
-        def item_dependencies(self) -> dict[str, list[int]]:
-            dependencies: dict[str, list[int]] = {}
+        def item_dependencies(self) -> dict[str, set[int]]:
+            dependencies: dict[str, set[int]] = {}
             for unlock, tiers in self.levels:
                 names = [unlock] if unlock is not None else []
                 names += [g for _prisms, gimmicks in tiers for alternatives in gimmicks for g in alternatives]
                 for name in names:
-                    dependencies.setdefault(name, []).add(id(self))
+                    dependencies.setdefault(name, set()).add(id(self))
             return dependencies
 
         @override
