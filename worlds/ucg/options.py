@@ -47,7 +47,7 @@ class GimmickLocking(DefaultOnToggle):
     """
     display_name = "Gimmick Locking"
 
-class Minigames(DefaultOnToggle):
+class Minigames(Toggle):
     """
     Enable minigames as checks, such as Bort Bash, UNCANNY_DASH, Meowls, etc. 
     """
