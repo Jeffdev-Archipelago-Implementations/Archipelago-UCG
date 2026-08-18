@@ -18,13 +18,6 @@
 
 If you ever need to change any configurations (such as enabling/disabling deathlink, or stuff with the in game text client display) you can select the "gear" icon next to the mod in the mod menu to change configs. These changes will persist throughout. **THIS CONFIG MENU ONLY APPEARS IF YOU HAVE COOLER MODS INSTALLED.**
 
-## Create a Config (.yaml) File
-
-### What is a config file and why do I need one?
-
-See the guide on setting up a basic YAML at the Archipelago setup
-guide: [Basic Multiworld Setup Guide](/tutorial/Archipelago/setup/en)
-
 ## Joining a MultiWorld Game
 
 Once the mod is installed and enabled, you simply just have to open the game, click on the title screen, and fill out your connection info. After that, the game will setup your save for you, and you can play as normal!
