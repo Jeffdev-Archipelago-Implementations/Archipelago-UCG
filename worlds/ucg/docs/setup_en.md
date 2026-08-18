@@ -12,8 +12,8 @@
 
 1. Download the game and run it at least once, to create all the related folders.
 2. Download the Uncanny Cat Archipelago Mod and Cooler Mods.
-3. Place both of the ZIP FILES into the folder UNEXTRACTED located at %APPDATA%\Uncanny Cat Golf\mods for windows (unsure what it would be for mac or linux.) [NOTE: YOU MAY NEED TO MAKE THIS FOLDER YOURSELF]
-4. Open the game, navigate to the settings menu, then mods on the bottom right, and enable mods.
+3. Place both of the ZIP FILES into the folder UNEXTRACTED (so should have .zip at the end) located at %APPDATA%\Uncanny Cat Golf\mods for windows (unsure what it would be for mac or linux.) [NOTE: YOU MAY NEED TO MAKE THIS FOLDER YOURSELF]
+4. Open the game, navigate to the settings menu, then mods on the bottom right, and enable mods. (Make sure the Archipelago mod is at the top of the mod list!)
 5. Restart your game, then you should be able to fill out your Archipelago information from the title screen!
 
 If you ever need to change any configurations (such as enabling/disabling deathlink, or stuff with the in game text client display) you can select the "gear" icon next to the mod in the mod menu to change configs. These changes will persist throughout. **THIS CONFIG MENU ONLY APPEARS IF YOU HAVE COOLER MODS INSTALLED.**
