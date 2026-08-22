@@ -4,9 +4,9 @@
 
 - [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases).
 - [Uncanny Cat Golf](https://slappyhappy2000.itch.io/uncanny-cat-golf) (The game is free!!!!)
-- [Uncanny Cat Archipelago Mod](https://github.com/Jeffdev-Archipelago-Implementations/UncannyCatArchipelago)
+- [Uncanny Cat Archipelago Mod](https://github.com/Jeffdev-Archipelago-Implementations/UncannyCatAP)
 - [Uncanny Cat Archipelago APWorld](https://github.com/Jeffdev-Archipelago-Implementations/Archipelago-UCG)
-- [Cooler Mods v2.1.1 or higher](https://github.com/JustSomeJello/Cooler-Mods/releases/latest) (Technically optional, but required to make a config menu appear)
+- [Cooler Mods v2.1.1 or higher](https://github.com/JustSomeJello/Cooler-Mods/releases/latest)
 
 ## Installation Procedures
 
