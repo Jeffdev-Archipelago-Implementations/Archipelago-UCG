@@ -37,6 +37,12 @@ class UncannyCatWorld(World):
         elif goal_world == "P":
             self.options.world_p_levels.value = 1
 
+        if not rules.seed_levels(self):
+            raise OptionError(
+                f"Uncanny Cat Golf ({self.player_name}) has no levels left to play. "
+                f"Leave at least one level out of Excluded Levels, or enable more worlds."
+            )
+
         # Ensure prism count always works.
         self.options.prism_unlock_amount.value = min(
             self.options.prism_unlock_amount.value, rules.max_obtainable_prisms(self)
@@ -84,6 +90,8 @@ class UncannyCatWorld(World):
             "world_p_levels": self.options.world_p_levels.value,
             "world_e_levels": self.options.world_e_levels.value,
             "peak_checks": self.options.peak_checks.value,
+            "excluded_levels": sorted(self.options.excluded_levels.value),
+            "excluded_minigames": sorted(self.options.excluded_minigames.value),
             "rank_check_difficulty": self.options.rank_check_difficulty.value,
             "temp_modifiers": self.options.temp_modifiers.value,
             "chill_mode": self.options.chill_mode.value,

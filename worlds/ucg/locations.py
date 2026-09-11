@@ -241,8 +241,8 @@ LOCATION_DATA: dict[str, tuple[int, list[str]]] = {
     "4-8: On Heavens No The Chuckles Are Plentiful Peak Rank": (BASE_ID + 1407, ["Nuke", "Stop Markers", "Switch Tiles"]),
     "4-8: On Heavens No The Chuckles Are Plentiful Good Rank": (BASE_ID + 3407, ["Nuke", "Stop Markers", "Switch Tiles"]),
     "4-9: Uncanny Valley Complete": (BASE_ID + 408, ["Jump Pads", "Stop Markers", "Keys", "Nuke"]),
-    "4-9: Uncanny Valley Peak Rank": (BASE_ID + 1408, ["Jump Pads", "Stop Markers"]),
-    "4-9: Uncanny Valley Good Rank": (BASE_ID + 3408, ["Jump Pads", "Stop Markers"]),
+    "4-9: Uncanny Valley Peak Rank": (BASE_ID + 1408, ["Jump Pads", "Stop Markers", "Keys", "Nuke"]),
+    "4-9: Uncanny Valley Good Rank": (BASE_ID + 3408, ["Jump Pads", "Stop Markers", "Keys", "Nuke"]),
     "4-10: Dog Patrol Complete": (BASE_ID + 409, ["Dog"]),
     "4-10: Dog Patrol Peak Rank": (BASE_ID + 1409, ["Dog"]),
     "4-10: Dog Patrol Good Rank": (BASE_ID + 3409, ["Dog"]),
@@ -489,6 +489,27 @@ def level_item_name(location_name: str) -> str:
     return location_name
 
 
+def level_id(level_name: str) -> str:
+    """"1-4: Breakthrough!" -> "1-4"."""
+    return level_name.split(":", 1)[0].strip()
+
+
+LEVEL_NAMES: list[str] = list(dict.fromkeys(
+    level_item_name(location_name)
+    for location_name in LOCATION_DATA
+    if not is_minigame_location(location_name)
+))
+
+EXCLUDABLE_LEVEL_IDS: list[str] = [
+    level_id(name) for name in LEVEL_NAMES if items.world_prefix(name) != "0"
+]
+
+
+def get_excluded_level_ids(world: UncannyCatWorld) -> set[str]:
+    """The ids of the levels excluded, upper-cased so "p-14" matches "P-14"."""
+    return {key.strip().upper() for key in world.options.excluded_levels.value}
+
+
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
     return {location_name: LOCATION_NAME_TO_ID[location_name] for location_name in location_names}
 
@@ -498,11 +519,16 @@ def get_excluded_locations(world: UncannyCatWorld) -> set[str]:
     included_worlds = items.get_included_world_prefixes(world)
     # The goal level is not included
     goal_level = items.GOAL_LEVEL[world.options.goal_level.value]
+    excluded_levels = get_excluded_level_ids(world)
+    excluded_minigames = world.options.excluded_minigames.value
 
     excluded: set[str] = set()
     for location_name in LOCATION_NAME_TO_ID:
         if is_minigame_location(location_name):
             if not world.options.minigames:
+                excluded.add(location_name)
+            # Remove minigames that the player has chosen to remove
+            if any(location_name.startswith(f"{game}: ") for game in excluded_minigames):
                 excluded.add(location_name)
             continue
 
@@ -510,6 +536,8 @@ def get_excluded_locations(world: UncannyCatWorld) -> set[str]:
         if items.world_prefix(level) not in included_worlds:
             excluded.add(location_name)
         elif level == goal_level:
+            excluded.add(location_name)
+        elif level_id(level) in excluded_levels:
             excluded.add(location_name)
         elif not world.options.peak_checks and location_name.endswith(" Peak Rank"):
             excluded.add(location_name)

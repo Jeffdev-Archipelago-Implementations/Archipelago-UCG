@@ -366,6 +366,15 @@ def get_gimmick_item_names(world: UncannyCatWorld) -> list[str]:
     ]
 
 
+def get_minigame_item_names(world: UncannyCatWorld) -> list[str]:
+    """The minigame unlock items. An excluded minigame drops its item, since it has no locations left to gate."""
+    names = sorted(MINIGAME_ITEM_NAMES)
+    if not world.options.minigames:
+        return names
+    excluded = world.options.excluded_minigames.value
+    return [name for name in names if name not in excluded]
+
+
 def get_item_classification(world: UncannyCatWorld, name: str) -> ItemClassification:
     if name in MINIGAME_ITEM_NAMES and not world.options.minigames:
         return ItemClassification.filler
@@ -399,7 +408,7 @@ def create_item_with_correct_classification(world: UncannyCatWorld, name: str) -
 def create_all_items(world: UncannyCatWorld) -> None:
     itempool: list[Item] = [
         world.create_item(name)
-        for name in get_unlock_item_names(world) + get_gimmick_item_names(world) + sorted(MINIGAME_ITEM_NAMES)
+        for name in get_unlock_item_names(world) + get_gimmick_item_names(world) + get_minigame_item_names(world)
     ]
 
     # Every slot the required items don't claim is room to add fillers.
@@ -408,7 +417,7 @@ def create_all_items(world: UncannyCatWorld) -> None:
     if filler_to_add < 0:
         raise OptionError(
             f"Uncanny Cat Golf ({world.player_name}) created {len(itempool)} items for only "
-            f"{location_count} locations. Enable more worlds or peak checks."
+            f"{location_count} locations. Enable more worlds or peak checks, or exclude fewer levels."
         )
 
     guaranteed = sorted(FILLER_ITEM_NAMES)

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from Options import PerGameCommonOptions, Toggle, DefaultOnToggle, OptionSet, DeathLink, Range, Choice
+from Options import PerGameCommonOptions, Toggle, DefaultOnToggle, OptionSet, DeathLink, Range, Choice, OptionError
+
+from .locations import EXCLUDABLE_LEVEL_IDS
 
 class GoalLevel(Choice):
     """
@@ -77,6 +79,38 @@ class PeakChecks(Toggle):
     """
     display_name = "Peak Checks"
 
+class ExcludedLevels(OptionSet):
+    """
+    Remove levels from the multiworld completely. This removes all locations related to that level, and the level unlock item.
+    Name levels by their id, e.g. "1-4, P-14, 5-3".
+
+    Excluding a level also removes the prisms from that level in logic, so your goal prism amount
+    may be forcefully lowered to a still-obtainable number.
+
+    World 0 cannot be excluded at all (why would you want to?)
+    """
+    display_name = "Excluded Levels"
+    valid_keys = EXCLUDABLE_LEVEL_IDS
+
+    def verify_keys(self) -> None:
+        # Level ids are case-insensitive, so "p-14" is the same key as "P-14".
+        self.value = {key.strip().upper() for key in self.value}
+        tutorial = sorted(key for key in self.value if key.startswith("0-"))
+        if tutorial:
+            raise OptionError(
+                f"World 0 cannot be excluded, but {', '.join(tutorial)} was listed in Excluded Levels. "
+                f"Its levels need no unlock item, so they are the only checks reachable at the start."
+            )
+        super().verify_keys()
+
+class ExcludedMinigames(OptionSet):
+    """
+    Remove specific minigames from the multiworld completely. This removes all locations related to that minigame, and the minigame unlock item.
+    Valid options are "Bort Bash", "UNCANNY_DASH", and "Meowls"
+    """
+    display_name = "Excluded Minigames"
+    valid_keys = {"Bort Bash", "UNCANNY_DASH", "Meowls"}
+
 class RankCheckDifficulty(Choice):
     """
     Which in-game rank sends the per-level rank check.
@@ -143,6 +177,8 @@ class UncannyCatOptions(PerGameCommonOptions):
     world_p_levels: WorldPLevels
     world_e_levels: WorldELevels
     peak_checks: PeakChecks
+    excluded_levels: ExcludedLevels
+    excluded_minigames: ExcludedMinigames
     rank_check_difficulty: RankCheckDifficulty
     temp_modifiers: TemporaryModifiers
     chill_mode: ChillMode
