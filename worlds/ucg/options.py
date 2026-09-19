@@ -9,26 +9,60 @@ class GoalLevel(Choice):
     Set what goal level you want to do have as your final level.
     This level is removed from the multiworld, if selected, and will not be an item sent.
     Levels from World 5 or World P will force enable those worlds if selected, and the worlds aren't enabled
+    4-18 is a level with no gameplay or uncanny cat, so is provided as an option if you want to just win when you are at go mode.
     """
     display_name = "Goal Level"
     default = 1
 
     option_3_18 = 0
     option_4_17 = 1
-    option_5_18 = 2
-    option_P_17 = 3
+    option_4_18 = 2
+    option_5_18 = 3
+    option_P_17 = 4
 
 class PrismUnlockAmount(Range):
     """
-    How many prisms are required to be obtained in total before your goal level unlocks.
+    How many in game rank prisms are required to be obtained in total before your goal level unlocks.
     Requirement may be forcefully lowered to account for disabled levels or peak checks being disabled.
     You can always view the required amount you need in game to reference it.
+
+    Does nothing if macguffin goal is enabled.
     """
     display_name = "Goal Level Prism Amount"
 
     default = 200
     range_start = 50
     range_end = 560
+
+class MacguffinGoal(Toggle):
+    """
+    Sets your goal to require a specified amount of "Cannium Prism" items instead of a specific requirement.
+    This is a macguffin item that unlocks the goal level when reaching the specified amount.
+    """
+    display_name = "Macguffin Goal"
+
+class MacguffinAmount(Range):
+    """
+    How many macguffin "Cannium Prism" items are added into the multiworld.
+    Does nothing if macguffin goal is disabled.
+    May be automatically lowered depending on settings and excluded levels.
+    """
+    display_name = "Goal Level Macguffin Amount"
+
+    default = 40
+    range_start = 10
+    range_end = 50
+
+class MacguffinPercentRequired(Range):
+    """
+    What percentage "Cannium Prism" items are required to be obtained in total before your goal level unlocks.
+    Does nothing if macguffin goal is disabled.
+    """
+    display_name = "Macguffin Required Percentage"
+
+    default = 75
+    range_start = 25
+    range_end = 100
 
 class LevelUnlockStyle(Choice):
     """
@@ -78,6 +112,25 @@ class PeakChecks(Toggle):
     Add a check for gaining a "PEAK" rank in a level. These can be really difficult.
     """
     display_name = "Peak Checks"
+
+class Coinsanity(Choice):
+    """
+    Add checks for every coin found in the levels.
+
+    If you set this to All, it may be beneficial to make Uncanny Cat Spray a local item, to prevent bloating
+    the multiworld with a huge amount of filler from your game. Please be cautious when using this setting
+    without other people being aware of it, as this adds over 1000 locations into the game.
+
+    Off: Coins are not checks.
+    All: Adds checks for every individual coin.
+    Full Clear: Adds checks for fully clearing all coins in a level, but leaves out individual coin checks.
+    """
+    display_name = "Coinsanity"
+
+    default = 0
+    option_off = 0
+    option_all = 1
+    option_full_clear = 2
 
 class ExcludedLevels(OptionSet):
     """
@@ -132,7 +185,8 @@ class TemporaryModifiers(DefaultOnToggle):
     Adds temporary modifier items based on the existing modifiers, some of which are traps and some are useful. These last until you complete a level.
     If you find these too difficult, you can always go back to 0-1 to cycle through them, as that level will always be available.
 
-    When enabled, these make up all of the filler in your pool. When disabled, that filler is all Uncanny Cat Spray instead.
+    When enabled, these make up all of the filler in your pool, or about 30% of it with Coinsanity on (the rest is Uncanny Cat Spray).
+    When disabled, that filler is all Uncanny Cat Spray instead.
     Either way you still get one of each of the costumes and other one-off filler items.
     """
     display_name = "Temporary Modifiers"
@@ -170,6 +224,9 @@ class DeathLinkAmnesty(Range):
 class UncannyCatOptions(PerGameCommonOptions):
     goal_level: GoalLevel
     prism_unlock_amount: PrismUnlockAmount
+    macguffin_goal: MacguffinGoal
+    macguffin_amount: MacguffinAmount
+    macguffin_percent_required: MacguffinPercentRequired
     gimmick_lock: GimmickLocking
     level_unlock_style: LevelUnlockStyle
     minigames: Minigames
@@ -177,6 +234,7 @@ class UncannyCatOptions(PerGameCommonOptions):
     world_p_levels: WorldPLevels
     world_e_levels: WorldELevels
     peak_checks: PeakChecks
+    coinsanity: Coinsanity
     excluded_levels: ExcludedLevels
     excluded_minigames: ExcludedMinigames
     rank_check_difficulty: RankCheckDifficulty

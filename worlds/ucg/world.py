@@ -48,6 +48,16 @@ class UncannyCatWorld(World):
             self.options.prism_unlock_amount.value, rules.max_obtainable_prisms(self)
         )
 
+        # Only as many macguffins as there are open locations for them
+        if self.options.macguffin_goal:
+            open_locations = items.get_open_location_count(self)
+            if open_locations < 1:
+                raise OptionError(
+                    f"Uncanny Cat Golf ({self.player_name}) has no room for any Cannium Prisms for the macguffin goal. "
+                    f"Enable more worlds or checks, or exclude fewer levels."
+                )
+            self.options.macguffin_amount.value = min(self.options.macguffin_amount.value, open_locations)
+
         # Chill Mode forces panic mode off
         if self.options.chill_mode:
             self.options.panic_mode.value = 0
@@ -83,6 +93,10 @@ class UncannyCatWorld(World):
         return {
             "goal_level": self.options.goal_level.value,
             "prism_unlock_amount": self.options.prism_unlock_amount.value,
+            "macguffin_goal": self.options.macguffin_goal.value,
+            "macguffin_amount": self.options.macguffin_amount.value,
+            "macguffin_percent_required": self.options.macguffin_percent_required.value,
+            "macguffin_required": items.get_macguffins_required(self),
             "gimmick_lock": self.options.gimmick_lock.value,
             "level_unlock_style": self.options.level_unlock_style.value,
             "minigames": self.options.minigames.value,
@@ -90,6 +104,7 @@ class UncannyCatWorld(World):
             "world_p_levels": self.options.world_p_levels.value,
             "world_e_levels": self.options.world_e_levels.value,
             "peak_checks": self.options.peak_checks.value,
+            "coinsanity": self.options.coinsanity.value,
             "excluded_levels": sorted(self.options.excluded_levels.value),
             "excluded_minigames": sorted(self.options.excluded_minigames.value),
             "rank_check_difficulty": self.options.rank_check_difficulty.value,
